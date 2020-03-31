@@ -653,7 +653,7 @@ Quando si verifica un evento per cui esiste un interesse attivo:
 
 ### Rinforzo positivo
 
-Manda un interest unicast soltanto al vicino da cui riceve meglio le notifiche, con un interval più basso e quindi una frequenza più bassa. Il nodo vicino al sink sceglierà il proprio vicino migliore e manda indietro il nuovo interest del sink. Si continua fino alla sorgente, rinforzando solo il cammino migliore.
+Il sink manda un interest unicast soltanto al vicino da cui riceve meglio le notifiche, con un interval più basso e quindi una frequenza più bassa. Il nodo vicino al sink sceglierà il proprio vicino migliore e manda indietro il nuovo interest del sink. Si continua fino alla sorgente, rinforzando solo il cammino migliore.
 
 ### Rinforzo negativo
 
@@ -666,10 +666,10 @@ Manda un interest unicast soltanto al vicino da cui riceve meglio le notifiche, 
 
 Spegnendo tutti i nodi del cammino peggiore si risparmia batteria, lasciandoli accesi a frequenza alta si mantiene un cammino di backup nel caso ci fossero problemi con il cammino peggiore.
 
-Il sink non riceve più notifiche dal suo vicino preferito:
+Se il sink non riceve più notifiche dal suo vicino preferito significa che:
 
-1. perché l'evento nell'area di interesse non si sta più verificando
-2. perché l'evento sta continuando a verificarsi, i sensori continuano a mandare le notifiche ma queste si perdono perché un nodo non riesce più a comunicare con il suo vicino
+1. l'evento nell'area di interesse non si sta più verificando
+2. l'evento sta continuando a verificarsi, i sensori continuano a mandare le notifiche ma queste si perdono perché un nodo non riesce più a comunicare con il suo vicino
 
 Queste due situazioni sono indistinguibili per il sink, quindi avere dei cammini di backup è utile per distinguere le due situazioni. Il sink può rinforzare positivamente un cammino di backup e rinforzare negativamente il vecchio cammino migliore.
 
@@ -679,51 +679,164 @@ Se un nodo sul cammino migliore non riceve più notifiche dal suo vicino per qua
 
 ### Downconvert
 
-Se un sensore qualsiasi riceve le notifiche con un determinato rate non necessariamente deve mandarle a tutti i suoi gradienti con lo stesso rate, ma adatta la sua frequenza a quella scritta all'interno del gradiente. Il nodo fa una media o manda solo l'ultima notifica in unicast. I nodi utilizzano dei beacon, messaggi che notificano i vicini di essere svegli, si fa quindi un invio unicast a tutti i gradienti svegli.
+Se un sensore qualsiasi riceve le notifiche con un determinato rate non necessariamente deve mandarle a tutti i suoi gradienti con lo stesso rate, ma adatta la sua frequenza a quella scritta all'interno del gradiente. Il nodo fa una media o manda solo l'ultima notifica in unicast. I nodi utilizzano dei beacon, messaggi che notificano i vicini di essere svegli, i nodi fanno quindi un invio unicast a tutti i gradienti svegli.
 
 ### Prestazioni direct diffusion
 
 #### Consumo energia
 
 - flooding &rarr; consuma tanto perché si fa sempre broadcast
+
 - multicast su albero ottimo &rarr; Prestazione misurate considerando un albero ottimo con radice nel sink, non realizzabile nella realtà delle WSN. Consuma più energia della diffusione perché non viene fatta nessuna aggregazione intermedia
+
 - diffusion &rarr; I nodi buttano via le notifiche duplicate e fanno aggregazione
+
+  ![image-20200331102650581](./image-20200331102650581.png)
 
 #### Latenza
 
-- flooding &rarr; alta latenza con tanti nodi, anche se facendo flooding si percorre anche il canale migliore c'è una broadcast storm di messaggi che interferiscono uno con l'altro
+- flooding &rarr; alta latenza con tanti nodi. Anche se facendo flooding si percorre anche il canale migliore c'è una broadcast storm di messaggi che interferiscono uno con l'altro
 - multicast &rarr; latenza più bassa
 - diffusion &rarr; trova cammini molto simili a quelli dell'albero ottimo
 
-immagine pagina 11
+![image-20200331102801643](image-20200331102801643.png)
 
 ### Prestazioni direct diffusion ottimizzato
 
-immagine pagina 12
+![image-20200331102900665](image-20200331102900665.png)
 
 ## Cost vs revers path
 
-Direct diffusion rientra nella categoria d reversse path forwarding, non tollera la mobiltà dei sink, E RISCHIA DI FORMARE LOOP. è utile quando ci sono tante interest con tanti eventi
+Direct diffusion rientra nella categoria di reverse path forwarding, non tollera la mobiltà dei sink, e c'è il rischio di formare loop. È utile quando ci sono tante interest con tanti eventi. L'altra categoria è cost-field-based di cui fa parte RUMOR.
 
-L'altra categoria è cost-field-based di cui fa partr RUMOR, quando le interest hanno poche risposte da eventi che accadono raramente
-
-data flooding per pochi eventi ma tante query 
-
-query flooding per tanti eventi ma poche query &rarr; direct diffusion
+pochi eventi ma tante query &rarr; rumor routing <br>tanti eventi ma poche query &rarr; direct diffusion
 
 ## Rumor routing
 
-Rumor routing invece di fare un flooding dei dati fa una diffusione casuale che l'informazione di un evento di un certo tipo si è verificato. Se il sink vuole saperne di più può seguire un cammino con un certo costo che porta all'evento. 
+Rumor routing invece di fare un flooding dei dati fa una diffusione casuale dell'informazione  che un evento di un certo tipo si è verificato. Se il sink vuole saperne di più può seguire un cammino con un certo costo che porta all'evento. 
 
 - area grigia &rarr; evento in corso
 - nodi neri &rarr; hanno rilevato l'evento in corso
-- nodi grigi &rarr; sink che manda query
+- nodo grigio &rarr; sink che manda query
 - nodi bianchi &rarr; non hanno nessuna informazione sull'evento in corso
 - doppio tratto &rarr; path per le query
 
-i nodi in modo random decidono se mandare la notifica che l'evento si sta verificando o meno. Se stanno per mandare l'evento scelgono di nuovo in modo random un vicino. Il nodo vicino riceve l'agente (evento), e quindi sa che a distanza 1 da lui c'è un certo tipo di evento ma non conosce i dettagli. Anche questo nodo scegli un nuovo vicino random a cui inviare l'evento, la distanza è 2.
+I nodi in modo random decidono se mandare la notifica che l'evento si sta verificando o meno. Se stanno per mandare l'evento scelgono di nuovo in modo random un vicino. Il nodo vicino riceve l'agente (evento), e quindi sa che a distanza 1 da lui c'è un certo tipo di evento ma non conosce i dettagli. Anche questo nodo scegli un nuovo vicino random a cui inviare l'evento, la distanza è 2.
 
-Le query inviate dal sink viaggiano in modo random, fino a quando arrivano ad un nodo che sa che si è verificato l'evento. Da questo in punto in poi la query non viaggia più in modo random ma segue il percorso fino al nodo che sa tutto di quell'evento. La risposta con la descrizione completa dell'evento viaggia al contrario fino al sink.
+Le query inviate dal sink viaggiano in modo random, fino a quando arrivano ad un nodo che sa che si è verificato l'evento. Da questo punto in poi la query non viaggia più in modo casuale ma segue il percorso fino al nodo che sa tutto di quell'evento. La risposta con la descrizione completa dell'evento viaggia al contrario fino al sink. Le analisi statistiche dimostrano che la probabilità di intersezione tra una query ed un nodo che conosce dov'è un evento non è bassa. 
+
+![image-20200331103745543](image-20200331103745543.png)
+
+I sensori conoscono a livello di sviluppo dell'applicazione quali grandezze misurare. I nodi mantengono una lista dei vicini scoperti attraverso beaconing. I nodi si alternano in due stati:
+
+- invio beacon con MAC address
+- ascolto dei beacon 
+
+### Pseudocodice data diffusion
+
+```pseudocode
+//il sensore controlla se c'è almeno un evento attivo tra tutti quelli   che deve notificare
+upon event do
+	//S stato del sensore, R variabile random
+	//la funzione f1 decide se generare o no un agente
+	take (bool) retransmit decision D <-- f1(S,R);
+	//se la decisione di trasmissione è si, il messaggio M può
+	//contenere tutti gli eventi che si stanno rilevando
+	//se gli eventi sono tanti e non ci stanno nel frame dell'evento
+	//metto solo gli eventi con priorità più alta, oppure vado a
+	//rotazione, notificando ogni volta eventi diversi
+	if (D = Yes) then
+		generate agent M <--list of recent events;
+		//inoltra ad una sola destinazione casualmente usando una
+		//funzione f diversa da f1, i neighbors sono i vicini
+		//svegli in questo momento
+		forward to 1 dest <-- f({neighbors},R);
+		
+//il nodo riceve un evento
+upon reception of an agent do
+	//il nodo si ricorda da quale vicino ha ricevuto un agente
+	//se il payload dell'agente non è pieno può crescere di dimensione
+	//passando attraverso altri nodi
+	//questo è possibile fino a quando non si raggiunge il massimo
+	//payload
+	synchronize events on agent w/ local events;
+	//Il TTL è un numero di hop
+	if (agent's TTL expired) then discard agent;
+	//se il TTL non è scaduto il nodo sceglie in modo random un vicino
+	//usando una funzione f' diverso da f, e una variabile R' che può
+	//essere diversa da R
+	//i vicini sono quelli attivi da cui sono stati ricevuti beacon
+	else forward to 1 dest <--
+		f’({neighbors},R');
+```
+
+### Diffusione dei dati
+
+![image-20200331122246463](image-20200331122246463.png)
+
+- Un sensore nella chiazza grigio chiaro ha fatto partire un evento
+- l'evento viene inoltrato verso il basso, i nodi ricordano che si è verificato da qualche parte un evento grigio chiaro
+- il punto bicolore è un sensore su cui è avvenuta una sincronizzazione perchè ha ricevuto sia l'evento chiaro che quello scuro. Memorizza quindi le strade per entrambi gli eventi
+- Il sensore bicolore reinoltra entrambi gli eventi
+
+### Blocco dei loop
+
+Se una chiazza non è piccolissima l'evento potrebbe essere inoltrato da più nodi. Un nodo potrebbe ricevere due eventi uguali con distanza differente.
+
+- A ha ricevuto un evento E1 e sa che può raggiungerlo da C con 4 hop
+
+- A ha ricevuto un evento E2 e sa che può raggiungerlo da C con 2 hop
+
+  ![image-20200331141634650](image-20200331141634650.png)
+
+- B ha ricevuto E1 e lo reinoltra ad A
+
+- Il nodo A capisce che il cammino per l'evento E1 passando per B è più corto di quello passando per C e memorizza solo il più breve. Con questo meccanismo si tagliano i loop
+
+![image-20200331141712917](image-20200331141712917.png)
+
+### Pseudocodice query processing
+
+```pseudocode
+when (event must be looked for) do
+	//destinazione scelta in modo casuale con una funzione f
+	//solo tra i vicini attivi
+	send query to a dest <-- f({neighbors},R);
+	//si attende risposta per un tempo T, il nodo può riprovare,
+	//fare il flooding della query oppure non fare nulla
+	if (no reply within T) then retry or flood
+		query or resign;
+//un nodo che riceve una query fa una reply che viaggia in un cammino a
+//rovescio
+upon reception of a query do
+	//se ho info sull'evento
+	if (info on event held locally) then reply;
+	//se il TTL della query è scaduto allora la query viene buttata
+	else if (query's TTL expired) then discard
+		query;
+//se la query è stata ricevuta da un nodo che conosce il cammino per 
+//l'evento non si tocca più il TTL perchè non va fatta scadere
+//nel cammino all'indietro
+else if (path to event) then route query;
+//se non ho un cammino per l'evento reinstrado la query casualmente
+else send query to a dest <-- f({neighbors},R');
+```
+
+### Rumor routing + Directed diffusion
+
+Si parla di insuccesso quando si hanno falsi positivi o falsi negativi:
+
+- **Falso positivo**: al cercatore viene detto che l'evento c'è, ma questo non è vero. L'evento è terminato ma le informazioni sono obsolete
+
+- **Falso negativo**: al cercatore viene detto che l'evento non c'è, ma non è vero. Questo è più grave in situazioni come incendi, alta temperatura in un reattore nucleare ecc...
+
+Nel rumor routing il falso negativo si presenta quando le query girando a caso non arrivano mai ad un nodo che ha informazioni sull'evento. Il sink sta cercando di capire se si sta verificando un evento, e ha sentore che l'evento ha alta probabilità di essere in corso. Se l'evento è molto critico, il sink incomincia ad utilizzare un approccio rumor routing per diffondere le query. Mando una query, aspetta, non ha risposta. Il tempo può essere quanto serve al messaggio per coprire un numero di hop pari al diametro della rete. Se non riceve risposta rimanda di nuovo la query. Dopo un numero basso di tentativi in rumor routing unicast, il sink come ultima risorsa prova un approccio directed diffusion che comporta un flooding della query. Tutti quelli che hanno visto passare l'evento reinoltrano la query in flooding. È un trade off perchè all'inizio si risparmia energia con il rumor, se non si ottiene risposta si rinuncia al risparmio energetico usando il flooding. Rumor routing come directed diffusion non è un approccio standard ma solo un'idea generale a cui sono aggiunte vari meccanismi di ottimizzazione.
+
+
+
+
+
+
 
 
 
