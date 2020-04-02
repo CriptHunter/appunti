@@ -226,7 +226,7 @@ burndown chart: quanto ci metto a bruciare tutti i miei post-it
 - Ogni giorno guardo quanti post-it ho finito, e controllo se sono oltre il pianificato o sotto il pianificato. 
 
 ![img](./lu25135e6laek_tmp_c3721ef46f8623fa.png)  
- 
+
  
 
 # Software configuration management
@@ -317,13 +317,17 @@ Inizializza un repository vuota creando una cartella .git che contiene:
 
 ### git help
 
+```bash
 git XXX --help
+```
 
-​	oppure
+oppure
 
+```bash
 man git-XXX
+```
 
-### livelli git
+### Livelli git
 
 ![image-20200330102520481](./image-20200330102520481.png)
 
@@ -331,18 +335,18 @@ man git-XXX
 - **Index:** dove si salva la versione della prossima configurazione di cui si vuole fare commit
 - **Repository(history)**
 
-### working space vs .git/objects
+### Working space vs .git/objects
 
 ![image-20200330103307826](./image-20200330103307826.png)
 
 - **Working space** &rarr; sono directory e file
 - **Git objects**
-  - tree &rarr; quasi concetto di directory
-  - blob &rarr; è quasi un file, è condiviso in diverse versioni, diverse directory, non c'è il nome del file
+  - tree &rarr; simile al concetto di directory
+  - blob &rarr; è quasi un file, è condiviso in diverse versioni o diverse directory, non c'è il nome del file
 
-### head
+### HEAD
 
-La head punta ad un nome di un ramo. I commit sono l'evoluzione di quel ramo. Se la head non punta ad un ramo ma ad una commit si dice detatched. La commit rischia di andare persa.
+La HEAD punta ad un nome di un ramo. I commit sono l'evoluzione di quel ramo. Se la HEAD non punta ad un ramo ma ad una commit si dice detatched. La commit rischia di andare persa.
 
 ### git status
 
@@ -363,7 +367,7 @@ Nell’hash non c’è il nome del file ma solo il contenuto. Infatti se faccio 
 Funzionamento git add dettagliato:
 
 - calcola dimensione file
-- crea una stringa composta da type + spazio + dimensione + terminatore stringa. type per tutti i file è uguale a BLOB
+- crea una stringa composta da type + spazio + dimensione + terminatore stringa (type per tutti i file è uguale a BLOB)
 
 - concatena il risultato con il contenuto vero e proprio
 -  calcola lo SHA1 della “stringa” complessiva. Le prime due cifre dell’hash sono usate per accedere al filesystem in maniera efficiente
@@ -403,7 +407,7 @@ git commit --amend serve per annullare l'ultimo commit. Prende l'antenato del co
 
 ![image-20200330133148451](./image-20200330133148451.png)
 
-- **git diff** &rarr; confronto tra stage e working space. Guardo cosa ho modificato da quanto ho fatto degli add. Prima di un commit lo uso per verificare se c'è qualche modifica che non ho ancora aggiunto. I file untracked sono ignorati
+- **git diff** &rarr; confronto tra stage e working space. Guardo cosa ho modificato da quando ho fatto degli add. Prima di un commit lo uso per verificare se c'è qualche modifica che non ho ancora aggiunto. I file untracked sono ignorati
 - **git diff --cached** &rarr; confronto tra HEAD e index per vedere cosa cambierebbe dopo una commit
 - **git diff HEAD** &rarr;  differenza tra working directory e head bypassando l'index
 - **git diff etichetta1 etichetta2** &rarr; confronto tra due etichette
@@ -435,13 +439,37 @@ git checkout[ref][--][files]
 
 - **git reset HEAD^3** &rarr; sposta la HEAD, il commit puntato in precedenza non è più raggiungibile. 
 
-  - --soft &rarr; index e working directory non cambiano. Se poi si fa una commit, compatto più commit in una sola
-  - --hard &rarr; cambiano index e working directory, butto via tutto il lavoro corrente
+  - `--soft` &rarr; index e working directory non cambiano. Se poi si fa una commit, compatto più commit in una sola
+  - `--hard` &rarr; cambiano index e working directory, butto via tutto il lavoro corrente
   - con niente &rarr; Cambia l'index. Torna indietro alla versione precedente, ma nella  working directory ci sono ancora i file vecchi. Scelgo di quali file fare add e commit
 
   ![image-20200330135622042](./image-20200330135622042.png)
 
+### Git revert
 
+Comantdo safe, al contrario di git reset. Non distrugge o cambia la storia ma crea un commit che inverte gli effetti del commit citato (che potrebbe anche non essere l'ultimo). Fa un nuovo commit, non cancella quelli vecchi.
+
+### Git merge
+
+![image-20200402102449267](image-20200402102449267.png)
+
+### Git rebase
+
+![image-20200402102712550](image-20200402102712550.png)
+
+Prendere tutti i commit sviluppati indipendentemente e fare finta che siano stati fatti partendo dal ramo master. In questo modo il grafo delle commit è molto più semplice da leggere e la storia è lineare.
+
+```bash
+git rebase --onto
+```
+
+Se mi accorgo che la feature A è indipendente dalla feature B, faccio un rebase per fare in modo che la feature A derivi direttamente da master
+
+![image-20200402103943664](image-20200402103943664.png)
+
+### Git bisect
+
+Serve quando si scopre un problema che si è sicuri non fosse presente in un punto della storia, ma non si ha idea di quando è stato inserito. Il problema è cercare in modo efficiente il punto in cui ha smesso di funzionare. Git bisect prende una commit *bad* e una *good* e cerca il punto intermedio. Il programmatore deve marcare la commit trovata come *good* o *bad*. Se marcata come *bad*, bisect dimezza di nuovo. Quando si sceglie *good* si dimezza dall'altra parte. L'ultima commit *good* viene scelta come corretta. Si può anche dare un comando a `bisect run` per eseguirlo ogni volta che dimezza.
 
 ### Git data: repository
 
@@ -516,5 +544,84 @@ Come posso a partire da A nominare:
 - E = ~1 ^2
 - H = ~2 ^2 
 
+## Sistemare repository incasinata
 
+- `git reset --hard` &rarr; cambia index e working space come la HEAD
+- `git commit --amend` &rarr; sostituisco l'ultima commit, posso usarla anche solo per cambiare il messaggio
+- `git reset --hard HEAD^` &rarr; cancella ultima commit
+- `git reset {COMMITISH}` &rarr; torno alla commit COMMITISH
+- `git push --force` &rarr; push sincronizza il repo locale con quello remoto solo se non ci sono problemi, il --force sostituisce la repo locale con quella remota
+
+## Comandi esercitazione 2
+
+```bash
+mkdir merge
+cd merge
+echo A > A
+git add A
+git commit -m "A"
+"appende del testo in A"
+git branch evoluzione
+git add A
+git commit -m "aggiunta prima linea" #è ancora il ramo master
+git checkout evoluzione #passo al ramo evoluzione
+"Aggiunge testo in fondo ad A"
+git add A
+git commit -m "aggiunta linea in fondo"
+git hist --all #ora ci sono due diramazioni diverse a partire dalla   
+               #commit A
+git merge master #voglio unire master in evoluzione, ci riesce perchè
+                 #una linea era in cima e l'altra in fondo al file
+git reset --hard HEAD^ #annulla l'ultimo merge
+"modifico prima linea di A"
+git add A
+git commit -m "fatta modifica anche alla prima linea"
+git merge master #conflitto tra evoluzione e master su riga uno di A
+"risolvo il conflitto"
+git add A
+git commit -m "nuova versione con nuova feature"
+git checkout master
+git merge evoluzione #politica fast-forward non fa un nuovo commit
+                     #master e evoluzione puntano alla stessa commit
+git reset --hard HEAD^ 
+git checkout evoluzione --hard HEAD^
+git checkout master
+git reflog master
+git reset --hard master@{2}  #ripristinata situazione pre merge
+git checkout -b temp
+git rebase master #c'è conflitto è come fare il merge
+"risolvo conflitto"
+git rebase --skip
+gti rebase --continue
+git checkout evoluzione
+git reset --hard temp
+git branch -D temp #il risultato è un unico cammito che da master porta
+                   #a evoluzione
+cd ..
+mkdir bisect
+cd bisect/
+git init
+for i in $(seq 1 100)
+	do
+	echo $i >> A
+	echo $i > B
+	git add A B
+	git commit -m "$i commit"
+	done
+git checkout a567 -b develop
+echo C > C
+git add C
+git commit -m "C"  #per develop C deriva dal commit 1
+git rebase --onto develop master~10 master 
+git branch oldmaster
+"sistemo merge conflict"
+git add A
+git rebase --continue
+"sistemo merge conflict"
+git add B
+git rebase --continue 
+#ora gli ultimi 10 commit su master è come se proseguissero dal commit C
+... cose a caso che non ho capito ...
+
+```
 
