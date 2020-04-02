@@ -230,7 +230,7 @@ La risposta può cambiare in base al K:
 
 - se k è grande l’intorno potrebbe includere campioni appartenenti ad altre classi
 
-<img src="/home/lorenzo/Documents/secondo_semestre/bioinformatica/Appunti/k-nearest2.png" alt="image-20200327145426286" style="zoom: 67%;" />
+<img src="./k-nearest2.png" alt="image-20200327145426286" style="zoom: 67%;" />
 
 ## Limiti dei k – nn
 
@@ -262,9 +262,9 @@ Nello spazio bidimensionale la funzione è una retta, i punti sopra la retta han
 
 Il percettrone implementa funzioni lineari e può classificare solo insiemi linearmente separabili da una retta.
 
-### Errore
+### Minimizzare l'errore
 
-Va individuato il vettore w (dei pesi) che permette una corretta classificazione minimizzando $ E(w)$
+Va individuato il vettore w dei pesi che permette una corretta classificazione minimizzando $ E(w)$
 
 Si vuole minimizzare l’errore della funzione $y_k = sgn(w*x_k)$ computata dal percettrone, calcolata rispetto al training set T. Si calcola la funzione senza segno.
 
@@ -272,14 +272,125 @@ Si vuole minimizzare l’errore della funzione $y_k = sgn(w*x_k)$ computata dal 
 - $t_k$ sono le etichette
 - $y_k$ è il valore predetto
 
-Si calcola poi l'errore quadratico $E(w)= \frac{1}{2} \sum\limits_{t_k \in T} (t_k - y_k)^2$
+Si calcola poi l'errore quadratico :
+$$
+E(w)= \frac{1}{2} \sum\limits_{t_k \in T} (t_k - y_k)^2
+$$
 
 
-### Minimizzazione dei pesi discesa gradiente
+### Minimizzazione dei pesi, discesa a gradiente
 
-Ho una superficie di errore, prendo un punto sulla superficie e cerco di spostarmi verso il minimo. La cosa più logica è considerare il vettore tangente alla superficie. La direzione è determinata dal gradiente
+Ho una superficie di errore, prendo un punto sulla superficie e cerco di spostarmi verso il minimo. 
 
-Eta è il passettino di cui mi muovo.
+![image-20200401104731197](image-20200401104731197.png)
+
+Per spostarsi siG considerare il vettore tangente alla superficie. La direzione è determinata dal gradiente. Sul minimo la tangente vale 0.
+
+![image-20200401104815702](image-20200401104815702.png)
+
+Gradiente di E: $\nabla E(w)=[\frac{\delta E}{\delta w_0}, \frac{\delta E}{\delta w_1},..., \frac{\delta E}{\delta w_n}]$
+
+Cambio il vettore dei pesi di un valore $\Delta w_i$ che dipende dal valore del gradiente. Ci si muove di un valore piccolo $\eta$ (eta) che tende a decrescere ad ogni iterazione.
+
+$$
+w_i \larr w_i+ \Delta w_i \;\;dove \; \; \Delta w_i = -\eta \frac{\delta E}{\delta w_i}
+$$
+Si differenzia $E$ rispetto a $w_i$:
+$$
+\frac{\delta E}{\delta w_i}= \frac{\delta}{\delta w_i}\frac{1}{2}\sum\limits_{t_k \in T}(t_k-y_k)^2 = \sum\limits_{t_k \in T}(t_k -y_k)(-x_i)
+$$
+È una derivata composta in cui $w_i$ è nascosto in $y_{k}$
+
+### algoritmo iterativo di discesa a gradiente
+
+1. Inizializzazione di ciascun peso $w_i$ a valori casuali vicini allo 0
+
+2. Finchè non si raggiunge una condizione di stop:
+
+   - $ \Delta w_i $ casuale, inizializza random il vettore dei pesi
+   - per ogni $(x_k, t_k) \in T$ (il data set)
+     - calcola l'output $y_k$, prodotto scalare di $w \cdot x_k$, all'inizio sarà un valore casuale perchè il vettore è inizializzato a caso
+     - aggiorna il vettore dei pesi, per ogni peso $w_i$:
+    - $\Delta w_i = \eta(t_k -y_k)x_i$
+       - $w_i = w_i + \Delta w_i$
+
+Ad ogni iterazione ci si sposta verso il minimo usando il gradiente.
+
+L'algoritmo si ferma quando:
+
+- L'errore scende sotto una soglia prefissata
+- Quando i $\Delta w_i$ tendono a 0, infatti il valore di $\Delta  w_i$ dipende dal valore predetto e quello vero, se i due valori sono molto vicini anche $\Delta  w_i$ è vicino a 0. E quindi il percettrone sta predicendo correttamente il training set
+- Essendo iterativo ci si ferma dopo un certo numero di iterazioni
+
+### percettrone a singolo strato per classificazione a più classi
+
+![image-20200402151743439](image-20200402151743439.png)
+
+Problema di classificazione multiclasse a $m$ classi. C'è una matrice di pesi, $n$ numero input, $m$ numero classi. Se un oggetto appartiene alla classe 1, l'uscita è 1 sulla classe 1, -1 su tutte le altre. 
+
+wta = winner takes all, viene assegnata la classe in base a quella con l'output maggiore.
+
+### percettrone multistrato (MLP)
+
+I percettroni non sono in grado di classificare punti che non si possono separare con una retta. Vanno usati percettorni multistrato:
+
+- strato di ingresso
+- strati nascosi (hidden layer) &rarr; si trovano in mezzo tra l'ingresso e l'uscita
+- strati di uscita
+
+I neuroni di un layer sono connessi a tutti i neuroni dello strato successivo, ci sono sempre i pesi. L'ultimo strato nascosto è connesso allo strato di uscita.
+
+Un algoritmo di discesa a gradiente non è direttamente applicabile:
+
+- ogni strato ha i suoi pesi che devono essere aggiornati
+- solo l'errore rispetto all'uscita è noto
+
+#### Algoritmo di back propagation
+
+Computazione in avanti &rarr; passo l'input ai neuroni del primo stato che lo propagano fino all'uscita della rete neurale
+
+Si computa l'errore e si retropropaga dagli stati d'uscita fino all'input aggiungendo i pesi passo a passo
+
+### MLP: scelta modello
+
+L'apprendimento dipende dalla condizioni iniziali
+
+Le capacità di generalizzazione dipendono:
+
+- dalla topologia
+- dal numero di neuroni degl strati intermedi
+- dalla regolarizzazione della rete
+- dalle condizioni di stop selezionate
+- dal coefficiente di apprendimento
+- dalla variante algoritmi utilizzata
+
+Empiricamente si prova:
+
+- un numero diverso di strati intermedi
+- diverso numero di neuroni negli strati intermedi
+- diverse condizioni di stop
+- MLP regolarizzati come *Weight Decay* che cerca di minimizzare oltre l'errore anche il vettore dei pesi. Questo garantisce migliori capacità di generalizzazione
+
+## Reti neurali multistrato
+
+Ogni layer calcola una funzione la funzione viene passata al layer successivo che calcola un'altra funzione, il risultato sono funzioni composte come ad esempio $f(x) = l(g(h(x)))$
+
+### funzioni di attivazione
+
+a scalino
+
+[immagine]
+
+funzione sigmoide, il limite per zj tendende a +infinito è 1, per zj a -infinito + 0. è simile alla funzione scalino ma è più smooth e derivabile.
+
+### backpropagation
+
+Algoritmo di allenamento di una rete a partire dalle coppie (x,y)
 
 
 
+
+
+
+
+ 
