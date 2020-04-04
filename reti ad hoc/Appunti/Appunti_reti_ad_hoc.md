@@ -832,20 +832,33 @@ Si parla di insuccesso quando si hanno falsi positivi o falsi negativi:
 
 Nel rumor routing il falso negativo si presenta quando le query girando a caso non arrivano mai ad un nodo che ha informazioni sull'evento. Il sink sta cercando di capire se si sta verificando un evento, e ha sentore che l'evento ha alta probabilità di essere in corso. Se l'evento è molto critico, il sink incomincia ad utilizzare un approccio rumor routing per diffondere le query. Mando una query, aspetta, non ha risposta. Il tempo può essere quanto serve al messaggio per coprire un numero di hop pari al diametro della rete. Se non riceve risposta rimanda di nuovo la query. Dopo un numero basso di tentativi in rumor routing unicast, il sink come ultima risorsa prova un approccio directed diffusion che comporta un flooding della query. Tutti quelli che hanno visto passare l'evento reinoltrano la query in flooding. È un trade off perchè all'inizio si risparmia energia con il rumor, se non si ottiene risposta si rinuncia al risparmio energetico usando il flooding. Rumor routing come directed diffusion non è un approccio standard ma solo un'idea generale a cui sono aggiunte vari meccanismi di ottimizzazione.
 
+### Massimizzare probabilità intersezione
 
+#### Usando la posizione
 
+Query e agenti viaggiano in modo ortogonale così da incrociarsi sempre. Le query verso E/O, le notifiche verso N/S. I sensori hanno delle bussole che indicano il Nord, e usano antenne unidirezionali.
 
+- **Usando hardware specifico** &rarr; Le antenne del trasmittente e ricevente devono essere allineate e sfasate al massimo del 15% rispetto alla linea retta, e devono essere in line of sight. Le antenne devono poter essere ruotate a nord o sud usando un motore. 
+- **Usando i beacon** &rarr; I sensori si scambiano dei beacon con cui oltre al proprio mac address indicano anche la loro posizione stimata. Un nodo che deve inoltrare un messaggio riceve i beacon dai nodi vicini e in base alla sua posizione stima qual è il nodo che si trova più in direzione Nord di lui. Ovviamente i sensori non sono esattamente allineati. Questo non costa nulla sulla rete che si sta considerando perchè i beacon vengono già mandati nel rumor routing standard.
 
+#### Con la lista dei vicini
 
+I nodi cercano di instradare query ed agenti in linea retta senza usare la posizione. Il nodo processa il messaggio che riceve, aggiunge il suo mac address e lo reinoltra ad un vicino non elencato nella lista. Si cercano di evitare loop nel percorso dell'agente. Così però è poco preciso perchè i messaggi non viaggiano per forza in linea retta. Per migliorarlo il nodo carica nel messaggio anche il mac di tutti i suoi vicini. In questo modo i vicini in comune tra sorgente e nodo successivo non riceveranno mai il messaggio che tenderà a muoversi in linea retta. C'è un problema. Normalmente l'agente viaggiando viene arricchito da altri eventi che i nodi intermedi hanno visto. Si mette tutto nel payload. Si fa questo perchè una query che si muove random trova più facilmente una traccia. Il mac address è 48 bit, c'è quindi un problema di spazio, si sceglie al posto che caricare altri eventi sull'agente di caricare i mac address dei vicini. Come trade off si può riservare nel payload solo una parte per i vicini e si usa una politica first in - first out per quando il payload è pieno, sperando che ormai l'agente sia lontano da quei nodi.
 
+#### Modalità promisqua
 
+In modalità promisqua un sensore viene sempre risvegliato quando riceve un messaggio. Si può sfruttare questa modalità per aumentare la probabilità di intrecciare una query. Un nodo sceglie un vicino come next hop specificando il suo mac address. Il nodo successivo scopre di essere il destinatario confrontando il mac address del messaggio con il suo e reinoltra l'agente. Gli altri nodi intorno invece non sono destinatari ma ricevono comunque l'agente, ricordano nella loro cache che hanno visto l'agente e non reinoltrano l'agente. Normalmente la query deve incrociarsi esattamente su un nodo che ha portato l'agente. Con la modalità promisqua invece la query può arrivare ad un nodo che non ha ricevuto l'agente, ma che ha in cache il mac address di un nodo che è davvero sul path, e quindi gli reinoltra la query. Questo approccio è ottimo ma i nodi consumano più energia perchè si svegliano ogni volta che ricevono un messaggio anche se non è indirizzato a loro. 
 
+### Rumor: prestazioni
 
+I costi sono inferiori a direct diffusion con flooding delle query. Il costo di un flooding è $O(n^2)$ con $n$ numero di nodi. Nel caso di rumor routing il costo dipende dal numero di eventi e di query. Agenti e query devono avere un TTL grande (1000/2000 hop) per permettere di diffondere lontano l'evento e facilitare l'incrocio agente - query. 
 
+<img src="image-20200404125807361.png" alt="image-20200404125807361" style="zoom:200%;" />
 
+Le rige non grassetto riportano tre etichette:
 
-
-
-
+- La &rarr; lifetime agente come numero di hop
+- Lq &rarr; lifetime query come numero di hop
+- A &rarr; numero di agenti che si creano con un evento
 
 
