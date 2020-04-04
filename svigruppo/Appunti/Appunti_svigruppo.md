@@ -332,7 +332,7 @@ man git-XXX
 ![image-20200330102520481](./image-20200330102520481.png)
 
 - **Working space:** quello che si vede nella directory
-- **Index:** dove si salva la versione della prossima configurazione di cui si vuole fare commit
+- **Index:** è uno dei pochi file di git che non è testuale ma binario. Sull’index c‘è la versione della prossima configurazione di cui si vuole fare commit
 - **Repository(history)**
 
 ### Working space vs .git/objects
@@ -376,13 +376,13 @@ Funzionamento git add dettagliato:
 
 Dato un hash ritorna informazioni sul file. Se l’hash è univoco basta specificare i primi quattro caratteri.
 
-- -t → tipo
-- -s → dimensione
-- -p → stampa il contenuto (non sempre vero)
+- `-t` → tipo
+- `-s` → dimensione
+- `-p` → stampa il contenuto (non sempre vero)
 
 ### File index
 
-é un file fondamentale, essendo molto usato deve essere efficiente, è uno dei pochi file che non è testuale ma binario. Sull’index c‘è tutto quello che poi andrà in commit.
+È un file fondamentale, essendo molto usato deve essere efficiente, 
 
 ### git commit
 
@@ -401,7 +401,7 @@ Situazione normale del commit, la HEAD viene spostata sul nuovo commit che però
 
 ![image-20200330111342362](./image-20200330111342362.png)
 
-git commit --amend serve per annullare l'ultimo commit. Prende l'antenato del commit.
+`git commit --amend` serve per annullare l'ultimo commit. Prende l'antenato del commit.
 
 ### git diff
 
