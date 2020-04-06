@@ -445,15 +445,15 @@ git checkout[ref][--][files]
 
   ![image-20200330135622042](./image-20200330135622042.png)
 
-### Git revert
+### git revert
 
 Comantdo safe, al contrario di git reset. Non distrugge o cambia la storia ma crea un commit che inverte gli effetti del commit citato (che potrebbe anche non essere l'ultimo). Fa un nuovo commit, non cancella quelli vecchi.
 
-### Git merge
+### git merge
 
 ![image-20200402102449267](image-20200402102449267.png)
 
-### Git rebase
+### git rebase
 
 ![image-20200402102712550](image-20200402102712550.png)
 
@@ -467,17 +467,19 @@ Se mi accorgo che la feature A è indipendente dalla feature B, faccio un rebase
 
 ![image-20200402103943664](image-20200402103943664.png)
 
-### Git bisect
+### git bisect
 
 Serve quando si scopre un problema che si è sicuri non fosse presente in un punto della storia, ma non si ha idea di quando è stato inserito. Il problema è cercare in modo efficiente il punto in cui ha smesso di funzionare. Git bisect prende una commit *bad* e una *good* e cerca il punto intermedio. Il programmatore deve marcare la commit trovata come *good* o *bad*. Se marcata come *bad*, bisect dimezza di nuovo. Quando si sceglie *good* si dimezza dall'altra parte. L'ultima commit *good* viene scelta come corretta. Si può anche dare un comando a `bisect run` per eseguirlo ogni volta che dimezza.
 
-### Git data: repository
+![image-20200406101202344](image-20200406101202344.png)
+
+## Git data: repository
 
 ![image-20200330104225619](./image-20200330104225619.png)
 
 Se un oggetto non è puntato da nessun altro oggetto Git è autorizzato a cancellarlo.
 
-### Branch
+## Branch
 
 Un'etichetta è un punto di partenza per accedere a file e directory. Posso avere diverse etichette che rappresentano diverse fronti di evoluzione del progetto
 
@@ -486,6 +488,18 @@ Un'etichetta è un punto di partenza per accedere a file e directory. Posso aver
 branch &rarr; riferimento relativo ad un evoluzione, quando faccio commit cambia
 
 tag &rarr; relativo ad uno specifico commit
+
+## Stash
+
+Scenari in cui è utile lo stash:
+
+- **interrupted workflow** &rarr; Sto lavorando sulla mia feature ma non sono pronto per fare un commit e arriva una richiesta urgente. Non è possibile lavorare nella directory fino a quando non è pulita, si mettono quindi da parte i cambiamenti fatti nell'index e nel working space. Si lavora sulla richiesta urgente e dopo il commit si riprendono i file nello stash. Si possono dare nomi agli snapshot nello stash.
+- **pulling into a dirty tree** &rarr; Quando si scarica una nuova versione da remoto ma  il working space è stato modificato la pull viene rifiutata. Posso mettere il lavor nello stash, fare pull e riapplicare lo stash.
+- **testing** &rarr;
+
+`git stash` ha varie opzioni, si possono mettere anche i file untracked e i file nel gitignore.  `git stash -a` mette tutti i file, `git stash -u` invece include anche i file untracked
+
+L'index è ridondante quando index e working space sono uguali. Sono diversi quando è stata fatta git add. Posso scegliere se salvare l'index.
 
 ## Comandi esercitazione
 
@@ -624,4 +638,66 @@ git rebase --continue
 ... cose a caso che non ho capito ...
 
 ```
+
+## Comandi esercitazione 3
+
+```bash
+mkdir uno
+cd uno
+git init
+echo A
+echo A > A
+git add A
+git commit -m A
+echo A >> A
+git add A
+touch B
+echo A >> A
+git status #in questo momento c'è B untracked, e il file A è diverso in repo, index e working space
+git stash -a #tutti i file, tenere l'index, senza nome
+gt stash --index #ripristino la situazione compreso index
+```
+
+## Repository remoti
+
+### Comandi fondamentali
+
+- git remote &rarr; definire riferimenti remoti
+- git clone &rarr; remote + pull
+- git push
+- git fetch
+- git pull &rarr; fetch + merge
+
+### esercitazione
+
+```bash
+mkdir mioremoto
+cd mioremoto
+git init
+cd ..
+git clone mioremoto due #clono mioremoto nella cartella due, il remote prende nome "origin"
+cd due
+touch A
+git add A
+git commit -m A
+git push #non va perchè l'altra repo è sempre locale
+cd mioremoto
+git config receive.denyCurrentBranch ignore #perchè altrimenti dovrei fare la repository bare per pushare
+cd ../due
+git push
+cd mioremoto
+git status #per mioremoto è come se avessi cancellato il file A perchè lui non ce l'ha nel working space
+mkdir tre
+cd tre
+git init
+git remote add origin "path completo"/mioremoto
+git pull origin master
+...troppa roba da scrivere...
+```
+
+### Hook
+
+**pre-commit**: viene lanciato subito dopo un comando commit e prima di editare il messaggio. Può essere uno script qualsiasi.
+
+
 
