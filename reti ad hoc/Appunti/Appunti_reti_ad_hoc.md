@@ -75,8 +75,6 @@ WSN con sensori distribuiti ad alta densità sul territorio. I sensori realizzan
 - Self-organization: I sensori si organizzano da soli quando la topologia cambia per avere tolleranza ai fallimenti
 - Eterogeneità dei nodi
 
-# Introduzione corso 2
-
 ## Urban / participatory sensing
 
 Costituite dagli smartphone degli utenti.
@@ -855,10 +853,49 @@ I costi sono inferiori a direct diffusion con flooding delle query. Il costo di 
 
 <img src="image-20200404125807361.png" alt="image-20200404125807361" style="zoom:200%;" />
 
-Le rige non grassetto riportano tre etichette:
+Le righe non grassetto riportano tre etichette:
 
 - La &rarr; lifetime agente come numero di hop
 - Lq &rarr; lifetime query come numero di hop
 - A &rarr; numero di agenti che si creano con un evento
 
+# Slide 5
 
+## perchè un trasporto affidabile?
+
+La ridondanza di sensori, cammini e notifiche permette di avere una buona affidabilità dell'invio dei dati da sensori a sink. Non è vero il caso contrario da sink a sensori.  
+
+### Perchè non TCP ? 
+
+- **problema nell'indirizzamento multicast** &rarr; tutte le destinazioni riportano alla sorgente se hanno ricevuto una porzione dei dati tramite ack. La sorgente deve quindi conoscere l'insieme delle destinazioni a cui sta parlando, ciò è impossibile con i protocolli visti in precedenza.
+- **ACK è un problema** &rarr; i canali sono broadcast e proni a interferenze, gli acknowledgment potrebbero distruggersi in prossimita della sorgente. TCP funziona con l'idea di worst case, se arriva qualcosa di incomprensibile o non arriva niente ritrasmette il messaggio. La ritrasmissione consuma inutilmente batteria
+- **Soglia di ritrasmissione** &rarr; Se uno o più nodi destinatari non ricevono le informazioni che la sorgente sta cercando di trasmettere in modo affidabile vanno ritrasmesse. Si può usare una soglia per cui se x nodi su n non ricevono le informazioni, la sorgente reinoltra in unicast agli n - x nodi. Se invece sono tanti i nodi che non hanno ricevuto i dati allora invia di nuovo il messaggio in broadcast a tutti. Il problema è individuare la soglia x e decidere quanto tempo aspettare gli ack. Con un retrasmission timeout basso il sink potrebbe non aspettare gli ack che stanno arrivando lentamente, con un timeout alto fa perdere molto tempo. È difficile stimare un retrasmission timeout su un insieme di destinazioni a distanza diversa e con un duty cycle diverso
+- **TCP assume che la rete funzioni** &rarr; di solito in una rete normale un dato non arriva a destinazione perchè c'è congestione. Nelle WSN non dipende dalla congestione ma da un tasso di errore alto su canale, da collisioni tra le trasmissioni e da interferenze esterne. Nel frequency hopping il range di frequenze di trasmissione è diviso in sottorange. Sorgente e destinazione si accordano su come usare le frequenze saltando da una frequenza all'altra in modo random. Se c'è un interferenza su un sottorange di frequenza si ritrasmette subito su un'altra sottofrequenza. In generale è meglio essere più aggressivi che più lenti
+
+## Influenza tasso di errore
+
+$p$ è il tasso di errore sul canale. Con un cammino di $n$ hop tra sorgente e destinazione la probabilità che non subisca errore è $(1-p)^n$ . Gli hop sono piccoli quindi i cammini sono lunghi. Invece che operare end to end si opera hop by hop. Si cerca di essere affidabili sul singolo hop. Si usano NACK al posto che ACK, tutti i nodi che ricevono non comunicano, i nodi che non hanno ricevuto fanno NACK. I NACK agiscono su un singolo hop, si recupera subito senza instradare il NACK fino alla sorgente.
+
+## Pump slowly, fetch quickly
+
+- **Fetch quickly** &rarr; se qualcosa va storto si cerca di recuperare (fetch) il messaggio che non è arrivato a destinazione
+- **Pump slowly** &rarr; iniettare i dati nella rete lentamente in modo da permettere ai nodi che non ricevono i messaggi di avere il tempo di recuparare prima di immettere nuovi dati nella rete
+
+### Obbiettivi
+
+- **affidabilità nella consegna dei dati** &rarr; TCP opera in una rete in cui ci sono pochi fallimenti, per questo motivo effettua solo un numero piccolo di ritrasmissioni dopo le quali riporta errore al livello applicazione. Quello che fa PSFQ è usare un numero massimo di tentativi di recupero, se un nodo non riesce a recuperare e l'inconsistenza provvoca problemi nella rete allora si spegne.
+- **minimo supporto dall'infrastruttura sottostante** &rarr; non chiede niente di particolare al livello 3, solo di sapere fare broadcast one-hop e un routing qualsiasi come Directed Diffusion.
+- **minimo scambio di messaggi di controllo per reliability**
+- **correttezza anche con qualità di canale molto bassa**
+- **garanzia sulla latenza di consegna** &rarr; calcolare un upperbound sulla latenza di consegna
+
+### Nomenclatura
+
+Gli *user node* sono le sorgenti dei dati, i sensori sono i *destinatari*. 
+
+L'algoritmo è organizzato in 4 fasi:
+
+1. **PUMP** &rarr; user node invia dei dati con numero di sequena (come in TCP). I dati non sono per forza inviati con un unico messaggio. I dati sono inviati "lentamente" in modo che si riesca a recuperare un eventuale errore prima del dato successivo
+2. Il nodo riceve un messaggio con numero di sequenza $m-1$ e poi $m+1$, capisce che gli manca $m$
+3. **FETCH** &rarr; il nodo si attiva per eseguire il recupero su singolo hop usando un negative ack, cioè una richiesta di rinvio del dato. Si cercano di evitare nack duplicati.
+4. **REPORT** &rarr; richiesto da user node in situazioni particolari, come quando c'è un singolo messaggio e quindi non si può rilevare la loss, oppure si perdono tutti i messaggi alla fine della trasmissione
