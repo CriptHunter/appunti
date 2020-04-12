@@ -697,7 +697,93 @@ git pull origin master
 
 ### Hook
 
-**pre-commit**: viene lanciato subito dopo un comando commit e prima di editare il messaggio. Può essere uno script qualsiasi.
+**pre-commit**: viene lanciato subito dopo un cIlomando commit e prima di editare il messaggio. Può essere uno script qualsiasi.
+
+# Sistemi di build automation
+
+## Dependency hell
+
+Una convenzione possibile per il numero di versioni usa 3 token MAJOR.MINOR.PATCH si chiama versionamento semantico. Non è obbligatorio attenersi a questo standard.
+
+- MAJOR &rarr; cambiamenti incompatibili nelle API
+- MINOR &rarr; ci sono cambiamenti importanti ma retrocompatibili
+- PATCH &rarr; solo bugfix
+
+## Make
+
+I sistemi di build automation servono per ottenere automaticamente la composizione di un sistema e per documentare. Il più antico è make, nato per il C e per unix. Il C aveva appena introdotto la compilazione separata per file diverse, con successivo linking per mettere tutto insieme. Il make è necessario perché è scomodo compilare a mano decine di file diversi. Make controlla le date di modifica del sorgente e del prodotto. Ricompila solo se la data di modifica del sorgente è posteriore a quella del prodotto.
+
+Nel makefile ho delle ricette in cui si indica prodotto | sorgente | come viene prodotto
+
+```makefile
+helloworld.o: helloworld.c
+	cc -c -o helloworld.o helloworld.c
+
+helloworld: helloworld.o
+	cc -o $@ $<
+
+.PHONY: clean 
+clean:
+	rm helloworld.o helloworld
+```
+
+PHONY serve per dare un nome a dei comandi, non produce niente. 
+
+### Le soluzioni in C
+
+Make funziona molto bene in un ambiente di build fisso. Il contesto in cui la build avviene cambia poco da una macchina all'altra. Ma questo era già un problema negli anni 70.
+
+Soluzioni:
+
+- #if/#else
+- substitution macros
+- substitution functions
+
+Si popola il codice di if/else e macro per poter compilare il programma in ambienti diversi.
+
+### Configure
+
+Configure ha un database di tutte le idiosincrasie, è capace di capire in che contesto fare make e inserisce gli if def nel codice C.
+
+- il programmatore sa quali sono i punti critici del programma che potrebbero dare problemi e mette gli if def
+- deve capire quali macro mettere
+
+- prende dei file *.in che sono configuration template
+- produce un file config.h che indica come è fatto l'ambiente
+- produce gli if def con le macro che indicano quali if def utilizzare
+
+![image-20200409145939071](image-20200409145939071.png)
+
+## Ant
+
+Ant nasce come un modello di build automation per java in grado di gestire dipendenze, processi di generazione e rionfigurazione all'ambiente di build. Ant usa sia java che XML perchè nei processi di generazioni si possono chiamare classi java e la descrizione è fatta in XML. In teoria il programmatore non dovrebbe scrivere i file XML che dovevano essere fatta dall'IDE, ma ogni tanto era necessario l'intervento umano sull'XML per risolvere i problemi. Il passo avanti di Ant rispetto ad un makefile è che utilizza direttive che vengono eseguite da Ant. Ha un livello in astrazione in più rispetto al make. Per esempio se sul make voglio creare una cartella faccio mkdir, l'operazione magari funziona solo su alcuni sistemi.
+
+## Gradle
+
+Gradle nasce in ambiente Java ma il tool è agnostico rispetto all'ambiente di sviluppo. Attualmente è molto comune avere sistemi composti da componenti scritti in linguaggi diversi.
+
+**Caratteristiche Gradle:**
+
+- Domain specific language &rarr; utilizza un linguaggio di scripting chiamato Groovy
+
+- Build by convention &rarr; Gradle ha delle convenzioni che sono però modificabili
+- Supporta cataloghi di componenti &rarr; si possono specificare le librerie da utilizzare  per nome senza dover usare wget o altri sistemi per scaricarle
+- Supporto per il testing
+- Reportistica
+
+## Continuous integration
+
+Integrazione continua significa usare i sistemi di build automation per continuare a integrare il sistema ed averlo nello stato in cui lo riceverebbe il cliente se gli venisse consegnato in questo momento. Per gli agilisti è un ottimo modo per avere una misura di progresso e di user feedback. 
+
+Funzionamento pratico:
+
+1. lavoro su una copia locale sulla macchina di sviluppo
+2. sistema di build automation &rarr; non è solo compilazione perché c'è anche la parte di test
+3. build funzionante sulla macchina di sviluppo perché supera i test
+4. continuous integration &rarr; lo carico sulla macchina di integrazione che comprende altri componenti non scritti da me
+5. build funzionante sulla macchina di integrazione
+
+
 
 
 
