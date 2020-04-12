@@ -371,21 +371,124 @@ Empiricamente si prova:
 - diverse condizioni di stop
 - MLP regolarizzati come *Weight Decay* che cerca di minimizzare oltre l'errore anche il vettore dei pesi. Questo garantisce migliori capacità di generalizzazione
 
-## Reti neurali multistrato
+## Deep feed forward network
 
-Ogni layer calcola una funzione la funzione viene passata al layer successivo che calcola un'altra funzione, il risultato sono funzioni composte come ad esempio $f(x) = l(g(h(x)))$
+Ogni layer calcola una funzione che viene passata al layer successivo il quale calcola un'altra funzione. Il risultato sono funzioni composte come ad esempio $f(x) = l(g(h(x)))$ <br>$h(x)$ è il primo strato nascosto, il risultato è passato al layer successivo $g$. Ogni neurone di un layer prende in input un vettore e ritorna un valore scalare.
 
-### funzioni di attivazione
+La *profondità* è determinata dal numero di strati nascosti di cui è composta la rete. La *larghezza* indica il numero di neuroni presenti in ogni strato.
 
-a scalino
+L'apprendimento delle deep neural networks richiede il calcolo del gradiente di funzioni complesse. Questo problema è stato risolto con l'algoritmo di backpropagation.
 
-[immagine]
+### Backpropagation
 
-funzione sigmoide, il limite per zj tendende a +infinito è 1, per zj a -infinito + 0. è simile alla funzione scalino ma è più smooth e derivabile.
+Algoritmo di allenamento di una rete a partire dalle coppie (x,y) del training set. L'idea è sottoporre più volte il training set alla rete, aggiustando i pesi per minimizzare l'errore quadratico. L'algoritmo applicato è discesa gradiente, è facile se non ci sono strati nascosti. ma con più strati è meno automatico. Il training è un problema NP-completo, si ottiene un'approssimazione della funzione da computare.
 
-### backpropagation
+L'algoritmo continua ad aggiornare i pesi fino a quando non commette più errori, fino ad un numero massimo di iterazioni o fino a quando l'errore quadratico scende sotto una soglia $\epsilon$ 
 
-Algoritmo di allenamento di una rete a partire dalle coppie (x,y)
+```pseudocode
+initialize weights at random
+//passo forward
+repeat 
+    for each example in the training set
+        compute example's output
+        compute quadratic error
+        //backpropagation (parte dal layer di output)
+        for i = layers down to 1
+            compute update for weights at layer i
+        update all weights
+until (correct classification / max iteration reached)
+
+```
+
+![image-20200408135121081](image-20200408135121081.png)
+
+Esempio rete neurale con un solo strato hidden con 3 neuroni. L'obbiettivo è apprendere i pesi di output $w^o$ e i pesi dell'input $w^h$ che è una matrice che rappresenta i pesi dell'hidden layer. 
+$$
+z^0 = \sum^m\limits_{j=0}w^o_jh_j \quad \quad \quad o = \sigma(z^o)
+$$
+L'output è $o$, $z^0$ è la somma pesata della funzione computata dagli hidden neuron. Questa funzione è lineare, viene aggiunta una funzione di attivazione sigma non lineare (funzione sigmoide).
+$$
+\sigma(x) = \frac{1}{1 + e^{-x}} \quad \quad \quad \sigma'(x) = \sigma(x)(1-\sigma(x))
+$$
+$\lim_{x \to +\infty} \sigma(x) = 1$ e $\lim_{x \to -\infty} \sigma(x) = 0$. Per $x=0$ è $\frac{1}{2}$. Quando ci sono valori vicino a 1 si predice la classe positiva, vicino a 0 la classe negativa.
+$$
+z_j^h = \sum^n\limits_{i=0}w^h_{ij}x_i \quad \quad \quad h_j = \sigma(z^h_j)
+$$
+$z_j^h$ è la somma pesata degli input per il j-esimo neurone nascosto
+$$
+E = \frac{1}{2}(y-o)^2
+$$
+$E$ è l'errore quadratico da minimizzare, $o$ è l'output della rete, $y$ è il valore corretto da predire.
+$$
+w_i = w_i - \alpha \frac{\partial E}{\partial w_i} = w_i + \Delta w_i
+$$
+I pesi si aggiornano con la discesa gradiente, $\alpha$ è il learning rate, di solito è un valore molto piccolo (si chiamava $\eta$ nelle altre slide), $\Delta w_i$è l'update dei pesi.
+$$
+\frac{\partial E}{\partial w_j^o} = \frac{\partial E}{\partial o} \cdot \frac{\partial o}{\partial z^o} \cdot \frac{\partial z^o}{\partial w_j}
+$$
+Si calcola la derivata dell'errore rispetto all'output, è una funzione composta. Quindi derivata della funzione esterna per la derivata della funzione interna. Ma anche quella interna è composta e quindi si fa ancora la derivata composta.
+
+$$
+\frac{\partial E}{\partial o} = \frac{\partial}{\partial o}[\frac{1}{2}(y-o)^2] = -(y -o)
+$$
+
+$$
+\frac{\partial o}{\partial z^o} = o \cdot (1-o)
+$$
+
+$$
+\frac{\partial z^o}{\partial w_j^o} = h_j
+$$
+
+Si calcolano separatamente le 3 derivate.
+$$
+\frac{\partial E}{\partial w_j^o} = -(y-o)\cdot o \cdot (1-o) \cdot h_j = -\delta^oh_j
+$$
+Si calcola il prodotto delle derivate
+$$
+\Delta w_j^o = \alpha \delta^o h_j
+$$
+Si aggiornano i pesi, se l'output è corretto $\delta$ vale 0, il $\delta$ è più ampio con un errore maggiore
+
+![image-20200411191533440](image-20200411191533440.png)
+
+Si calcola poi l'errore rispetto a ogni peso dell'hidden layer. Il processo va ripetuto per ogni $i$ e $j$. L'errore viene propagato dall'output agli strati inferiori.
+
+----slide dopo-----
+$$
+\Delta w_j^o = \alpha \delta^o h_j
+$$
+
+$$
+\Delta w_{ij}^h = \alpha \delta^h_j x_j
+$$
+
+​														   con
+$$
+\delta^o =(y-o)\cdot o \cdot (1-o)
+$$
+
+$$
+\delta_j^h =\delta^o \cdot w_j^o \cdot h_j \cdot (1-h_j)
+$$
+
+I pesi vengono aggiornati partendo dallo strato di output e poi rispetto allo strato hidden. Il $\Delta w_{i,j}^h$ viene calcolato per ogni peso di input, ma l'update dei pesi viene fatto alla fine di un epoca, dopo aver passato tutti gli esempi. Si chiama aggiornamento batch. Dopo aver aggiornato i pesi, si fa di nuovo feed forward Per velocizzare l'apprendimento si fa mini batch, cioè non passo tutti i pesi di input ma suddivido gli esempi di training in blocchetti. Aggiorno i pesi per ogni blocchetto. Quindi in un epoch i pesi vengono aggiornati più volte.
+
+## Altre tipologie di reti neurali
+
+- Recurrent neural network &rarr; includono un certo meccanismo di memoria rispetto alla sequenza dei dati di input che vengono appresi. Nei casi in cui conta il contesto queste reti possono essere di grande utilità.
+- Associative neural networks
+- ...
+
+### Procedura di apprendimento
+
+3 sottoinsiemi:
+
+- training 
+- validation
+- test set
+
+
 
 
 
