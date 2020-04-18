@@ -454,7 +454,6 @@ Si aggiornano i pesi, se l'output è corretto $\delta$ vale 0, il $\delta$ è pi
 
 Si calcola poi l'errore rispetto a ogni peso dell'hidden layer. Il processo va ripetuto per ogni $i$ e $j$. L'errore viene propagato dall'output agli strati inferiori.
 
-----slide dopo-----
 $$
 \Delta w_j^o = \alpha \delta^o h_j
 $$
@@ -478,15 +477,71 @@ I pesi vengono aggiornati partendo dallo strato di output e poi rispetto allo st
 
 - Recurrent neural network &rarr; includono un certo meccanismo di memoria rispetto alla sequenza dei dati di input che vengono appresi. Nei casi in cui conta il contesto queste reti possono essere di grande utilità.
 - Associative neural networks
-- ...
+- Altre
 
-### Procedura di apprendimento
+## Convolutional neural network
 
-3 sottoinsiemi:
+https://towardsdatascience.com/a-comprehensive-guide-to-convolutional-neural-networks-the-eli5-way-3bd2b1164a53
 
-- training 
-- validation
-- test set
+![image-20200415110901361](image-20200415110901361.png)
+
+Si chiamano CNN perchè i neuroni al posto che effettuare la moltiplicazione tra vettore dei pesi e valori di input, effettuano una convoluzione. 
+
+[formula convoluzione]
+
+In generale non si ha a che fare con integrali ma con somme, si parla di convoluzione discreta [formula convoluzione discreta]. Nella realtà la somma è tra due valori discreti. Il kernel w corrisponde ai pesi da apprendere dalla rete, x corrisponde ad un tensore.
+
+[Formula con S i]
+
+è la formula per la convoluzione unidimensionale che si usa di solito, la parte che varia del kernel è più ridotta come dimensionalità rispetto all'input. La convoluzione è commutativa
+
+### Cross correlation
+
+[formula]
+
+esempio:
+
+1 * 3 + 0 * 2 + 3 * 1 = 5
+
+Sposto il kernel di una posizione. Il kernel può essere visto come un vettore della stessa lunghezza dell'input, in cui i valori non significativi del kernel sono 0. Shiftando il kernel vado a spostare gli 0.
+
+**One hot encoding** &rarr; codifica i nucleotidi ATCG utilizzando 4 bit, solo un bit alla volta ha valore 1.
+
+- 1 0 0 0 = A
+- 0 1 0 0 = T
+- 0 0 1 0 = C
+- 0 0 0 1 = G
+
+Si forma una matrice con 4 righe, e n colonne, con n numero di nucleotidi nella sequenza.
+
+### Vantaggi CNN
+
+- Il kernel ha una dimensione minore dell'input, il vantaggio è il valore della complessita spaziale e temporale della rete neurale. In una feed forward neural network con $m$ input e $n$ output la complessità è $O(n \cdot m)$. I kernel di una CNN corrispondono ai pesi, il tempo di calcolo è $O(k \cdot n)$. [immagine pagina 9, confronto ftra fnn e cnn]
+- Condivisione dei parametri (pesi) &rarr; nelle CNN il kernel scorre lungo l'input, i pesi vengono usati più volti perchè ci si sposta solo di una posizione. Nelle FNN i pesi invece vengono utilizzati una volta sola. 
+
+### Kernel
+
+- valid padding &rarr; la matrice iniziale è di dimensione maggiore rispetto alla matrice processata dal kernel
+
+  <img src="https://miro.medium.com/max/513/1*1VJDP6qDY9-ExTuQVEOlVg.gif" alt="img" style="zoom: 67%;" />
+
+- same padding &rarr; si aggiungono degli zeri intorno alla matrice dell'input in modo tale che la matrice processata dal kernel abbia la stessa dimensione della matrice di input
+
+  <img src="https://miro.medium.com/max/513/1*nYf_cUIHFEWU1JXGwnz-Ig.gif" alt="img" style="zoom:80%;" />
+
+### Pooling layer
+
+Si prende una sottomatrice e si proietta su una nuova matrice un'operazione statistica come massimo, minimo, valore medio.
+
+<img src="image-20200415110440643.png" alt="image-20200415110440643" style="zoom:80%;" />
+
+
+
+ 
+
+
+
+
 
 
 
