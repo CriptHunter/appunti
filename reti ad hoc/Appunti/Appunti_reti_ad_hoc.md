@@ -1,5 +1,3 @@
-# Protocolli per reti ad hoc e di sensori
-
 # Introduzione corso
 
 ## Prerequisiti
@@ -899,3 +897,72 @@ L'algoritmo è organizzato in 4 fasi:
 2. Il nodo riceve un messaggio con numero di sequenza $m-1$ e poi $m+1$, capisce che gli manca $m$
 3. **FETCH** &rarr; il nodo si attiva per eseguire il recupero su singolo hop usando un negative ack, cioè una richiesta di rinvio del dato. Si cercano di evitare nack duplicati.
 4. **REPORT** &rarr; richiesto da user node in situazioni particolari, come quando c'è un singolo messaggio e quindi non si può rilevare la loss, oppure si perdono tutti i messaggi alla fine della trasmissione
+
+### Fase di PUMP
+
+Lo usernode invia i dati in broadcast a tutti i suoi vicini (1 hop) con periodo $T_{min}$. Tutti i nodi che ricevono un messaggio lo memorizzano nella cache. I messaggi hanno un numero di sequenza per ricomporre i dati e accorgersi di mancanze nella sequenza. Il messaggio rimane in cache per il tempo necessario agli altri nodi di rilevare un fallimento. Quando un nodo riceve  un nuovo messaggio se lo ha già in cache lo scarta, altrimenti lo salva ed esegue un broadcast del messaggio dopo un tempo random tra $[T_{min}, T_{max}]$. Il messaggio può già essere in cache perché i dati sono mandati in flooding da ogni nodo intermedio. Quando i nodi reinoltrano il messaggio sono sempre più lenti dell'user node che invia con frequenza $T_{min}$. Nelle specifice PSFQ non ci sono indicazioni sui valori di $T_{min}$ e $T_{max}$. Un nodo è certo che il messaggio successivo arriverà come minimo dopo $T_{min}$, se il messaggio arrivato gli fa capire che c'è un gap, il nodo sa che può recuperare il messaggio mancante in almeno $T_{min}$ tempo.  $T_{min}$ evita quindi di diffondere i messaggi troppo velocemente cioè fa controllo di flusso. In TCP c'è la windows di ricezione. $T_{max}$ serve per evitare collisioni data l'alta densità di nodi. Se X manda un messaggio ai vicini Y, W Z, questi nodi potrebbero essere in raggio di comunicazione tra loro. Se Y, W e Z facessero broadcast istantaneamente dopo aver ricevuto il messaggio, queste trasmissioni si distruggerebbero tra loro. Con un tempo random tra $T_{min}$ e $T_{max}$ i nodi sono desincronizzati nell'invio. La differenza tra $T_{min}$ e $T_{max}$ è in relazione con il numero di nodi vicini che potrebbe aver un nodo. PSFQ è fatto in modo da poter stimare il tempo necessario per inviare i dati in tutta la rete.  La massima latenza è $D(n) = T_{max} \cdot n \cdot num_{hop}$ con $n$ il numero dei dati, $num_{hop}$ gli hop per la destinazione più lontana.
+
+### PSFQ: Invio dei NACK
+
+Il messaggio 3 viene perso, A si accorge solo quando riceve il messaggio 4. A entra in fase di recupero del messaggio 3, ma evita di reinoltrare il messaggio 4. Questo perché A deve già mandare un broadcast con un NACK dicendo che manca il 3, se mandasse anche il messaggio 4 anche B e C si accorgerebbero della mancanza del 3 e farebbero broadcast di NACK del 3 che potrebbero scontrarsi tra loro e distruggersi. 
+
+<img src="image-20200418111437654.png" alt="image-20200418111437654"  />
+
+### Fase di FETCH
+
+#### analisi statistica
+
+Si definisce $\Phi(i)$ la probabilità di successo alle i-esima ritrasmissione.
+$$
+\Phi(0) = 0
+$$
+
+$$
+\Phi(1) = (1-p)^3
+$$
+
+Se sto ritrasmittendo c'è stato un errore, la probabilità che arrivi il messaggio successivo è $(1-p)$ e questo fa notare che c'è un gap. Il nodo manda un NACK che ha probabilità $(1-p)$ che arrivi ad almeno un nodo con il messaggio che sto cercando, e ancora $(1-p)$ perché il nodo che ha il messaggio ricercato deve reinoltrarlo al nodo che ha fatto fetch. 
+$$
+\Phi(n) = (1-p)^2[1-p- \Phi(1) - \Phi(2) - ... - \Phi(n-1)]
+$$
+$(1-p)^2$ perché  $(1-p)$ arrivato con successo il messaggio successivo, moltiplicato per $(1-p)$ il NACK
+
+$1-p$ è la probabilità di successo della i-esima ritrasmissione, moltiplicato per la probabilità del successo della ritrasmissione $\Phi(i)$ fino a $\Phi(n-1)$. Si sottraggono le probabilità di tutte le ritrasmissioni andate male fino a $\Phi(n)$ 
+
+Probabilità che la prima e le $n-1$ trasmissioni successive vadano male e l'ultima vada bene:
+
+$$
+\Omega(n) = \Phi(1) + \Phi(2) + ... + \Phi(n)
+$$
+Probabilità recupero messaggio entro $n$ tentativi:
+
+$$
+(1-p) + (p * \Omega(n)) \; \; \; \; \; \; \; \; \; \; \; n \ge 1
+$$
+![image-20200418112655411](image-20200418112655411.png)
+
+#### Dettaglio fetch
+
+Si può mettere nel payload di un NACK tutti i messaggi mancanti. Il NACK non viene inviato subito ma con un ritardo casuale tra [0, $\Delta$], con $\Delta$ piccolo. Piccolo perchè si evita di aspettare troppo prima di inviare un nack e recuperare prima di $T_{max}$, ma allo stesso tempo grande abbastanza per desincronizzare i NACK degli altri nodi. 
+
+Se un nodo sente un altro NACK con gli stessi gap, allora sopprime il suo NACK e aspetta direttamente la ricezione dei pacchetti corretti. Se non riceve una risposta re-invia un NACK ogni $T_r$ t.c $\Delta$ << $T_r$ < $T_{max}$ fino a threshold. 
+
+Se un nodo chiede i messaggi può succedere che non ci sia nessun vicino che possiede tutti i messaggi richiesti, il nodo deve ricevere risposta tra $[1/4 \cdot T_r, 1/2 \cdot T_r]$ cioè si invia la risposta prima che il nodo ritrasmetta un altro nack. 
+
+I nodi che rispondono ai nack non devono inviare tutti i messaggi richiesti, ma basta anche un solo messaggio. Sarà il nodo richiedente a mettere insieme i vari messaggi ricevuti da nodi diversi. Se un nodo che non riesce a recuperare tutti i messaggi non fa nulla fino a quando non inizia un nuovo update di una configurazione.
+
+#### NACK: varianti
+
+- **hop extra** &rarr; Quando un nodo ha mandato NACK per threshold volte ed è stato sentito dai vicini threshold volte, i nodi vicini cercano di aiutare il richiedente reinoltrando il NACK di un altro hop, aumentando così la distanza da 1 a 2 hop. 
+
+- **vicino preferito** &rarr; il nodo genera NACK solo se riceve un messaggio nuovo dal suo vicino preferito. Nel NACK indico il genitore preferito. Per massimizzare la probabilità di successo e minimizzare le probabilità di collisione, gli altri nodi aumentano il loro tempo di risposta.
+
+### PSFQ magic number
+
+4 è un numero magico, usato in due modi:
+
+1. Nella fase di PUMP i nodi mettono i cache i messaggi e pescano il ritardo casuale tra $T_{min}$ e $T_{max}$. Se ricevono un messaggio uguale per la quarta volta, buttano via il messaggio e cancellano anche la ritrasmissione. Questo perché ci sono già altri 4 nodi che stanno reinoltrando il messaggio e dopo 4 la probabilità di successo non aumenta di molto.
+2. Nella fase di FETCH si limita il numero di tentativi di un nodo di recuperare un messaggio.
+
+
+
