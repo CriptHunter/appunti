@@ -487,21 +487,33 @@ https://towardsdatascience.com/a-comprehensive-guide-to-convolutional-neural-net
 
 Si chiamano CNN perchè i neuroni al posto che effettuare la moltiplicazione tra vettore dei pesi e valori di input, effettuano una convoluzione. 
 
-[formula convoluzione]
+$$
+s(t) = \int_{a \in A} x(a)w(t-a)da
+$$
 
-In generale non si ha a che fare con integrali ma con somme, si parla di convoluzione discreta [formula convoluzione discreta]. Nella realtà la somma è tra due valori discreti. Il kernel w corrisponde ai pesi da apprendere dalla rete, x corrisponde ad un tensore.
+- x = input
+- w = kernel
+- s = feature map
 
-[Formula con S i]
-
-è la formula per la convoluzione unidimensionale che si usa di solito, la parte che varia del kernel è più ridotta come dimensionalità rispetto all'input. La convoluzione è commutativa
+In generale non si ha a che fare con integrali ma con somme, si parla di convoluzione discreta.
+$$
+s(t) = (x \cdot w)(t) = \sum_{a = -\infty}^\infty x(a)w(t-a)
+$$
+Il kernel $w$ corrisponde ai pesi da apprendere dalla rete, $x$ corrisponde ad un tensore.
+$$
+s(i) = \sum_mI(m)K(i-m)
+$$
+È la formula per la convoluzione unidimensionale che si usa di solito, la parte che varia del kernel è più ridotta come dimensionalità rispetto all'input. La convoluzione è commutativa
 
 ### Cross correlation
 
-[formula]
+Formula cross-correlation 1-D:
+$$
+S(i,j)=\sum_m(i+m)K(m)
+$$
+**Esempio:**
 
-esempio:
-
-1 * 3 + 0 * 2 + 3 * 1 = 5
+<img src="image-20200419185121813.png" alt="image-20200419185121813" style="zoom:150%;" />
 
 Sposto il kernel di una posizione. Il kernel può essere visto come un vettore della stessa lunghezza dell'input, in cui i valori non significativi del kernel sono 0. Shiftando il kernel vado a spostare gli 0.
 
@@ -518,6 +530,12 @@ Si forma una matrice con 4 righe, e n colonne, con n numero di nucleotidi nella 
 
 - Il kernel ha una dimensione minore dell'input, il vantaggio è il valore della complessita spaziale e temporale della rete neurale. In una feed forward neural network con $m$ input e $n$ output la complessità è $O(n \cdot m)$. I kernel di una CNN corrispondono ai pesi, il tempo di calcolo è $O(k \cdot n)$. [immagine pagina 9, confronto ftra fnn e cnn]
 - Condivisione dei parametri (pesi) &rarr; nelle CNN il kernel scorre lungo l'input, i pesi vengono usati più volti perchè ci si sposta solo di una posizione. Nelle FNN i pesi invece vengono utilizzati una volta sola. 
+
+### CNN vs FFN
+
+![image-20200419185456143](image-20200419185456143.png)
+
+La prima è una CNN con kernel width = 3, la seconda una FFN.
 
 ### Kernel
 
