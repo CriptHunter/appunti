@@ -735,7 +735,7 @@ Make funziona molto bene in un ambiente di build fisso. Il contesto in cui la bu
 
 Soluzioni:
 
-- #if/#else
+- #if / #else
 - substitution macros
 - substitution functions
 
@@ -773,7 +773,7 @@ Gradle nasce in ambiente Java ma il tool è agnostico rispetto all'ambiente di s
 
 ## Continuous integration
 
-Integrazione continua significa usare i sistemi di build automation per continuare a integrare il sistema ed averlo nello stato in cui lo riceverebbe il cliente se gli venisse consegnato in questo momento. Per gli agilisti è un ottimo modo per avere una misura di progresso e di user feedback. 
+Integrazione continua significa usare i sistemi di build automation per continuare a integrare il sistema ed averlo nello stato in cui lo riceverebbe il cliente se gli venisse consegnato in questo momento. Per gli agilisti è un ottimo modo per avere una misura di progresso e di user feedback. L'idea è fare integrazione ogni volta che si fa commit in modo da essere sicuri che il pezzo di codice scritto si integra senza errori nel progetto globale.
 
 Funzionamento pratico:
 
@@ -783,7 +783,27 @@ Funzionamento pratico:
 4. continuous integration &rarr; lo carico sulla macchina di integrazione che comprende altri componenti non scritti da me
 5. build funzionante sulla macchina di integrazione
 
+## Gestire artifact
 
+Supponendo di avere 3 file:
 
+- `HelloWorld.c`
+- `HelloWorld.o`
+- `Make`
 
+Nei sistemi di versioning come Git non si salva il file *.o perché altrimenti sarebbe da aggiornare ogni volta che viene aggiornato il file *.c . Si salva invece il Make che indica il modo in cui ottenere il file *.o dal *.c . Rimane il problema del compilatore che può cambiare da una macchina all'altra e produrre quindi un file eseguibile diverso. I sistemi di build automation più moderni permettono di specificare ancora più parametri per indicare in modo preciso come compilare un programma. 
 
+## Gradle
+
+Gradle è l'evoluzione di Ant e Maven perché aggiunge la possibilità di descrivere l'ambiente di sviluppo e gli strumenti di build automation e inoltre inserisco all'interno del sistema di configuration management Gradle. Docker esplicita anche l'ambiente in cui viene eseguito il programma versionato. 
+
+### Esempio Gradle
+
+Gradle permette "build by convention", cioè non è obbligatorio specificare tutto se si rispettano le convenzioni. Si può "programmare" in Gradle usando Java, Groovy o Kotlin
+
+```shell
+git init
+gradle init --type java-application  #tipo già conosciuto da Gradle
+```
+
+Nelle cartelle create da Gradle c'è anche il file *gradlew*, un wrapper che permette di scaricare la versione corretta di Gradle per compilare il programma.
