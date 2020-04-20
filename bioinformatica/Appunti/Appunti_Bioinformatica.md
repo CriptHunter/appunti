@@ -528,7 +528,7 @@ Si forma una matrice con 4 righe, e n colonne, con n numero di nucleotidi nella 
 
 ### Vantaggi CNN
 
-- Il kernel ha una dimensione minore dell'input, il vantaggio è il valore della complessita spaziale e temporale della rete neurale. In una feed forward neural network con $m$ input e $n$ output la complessità è $O(n \cdot m)$. I kernel di una CNN corrispondono ai pesi, il tempo di calcolo è $O(k \cdot n)$. [immagine pagina 9, confronto ftra fnn e cnn]
+- Il kernel ha una dimensione minore dell'input, il vantaggio è il valore della complessita spaziale e temporale della rete neurale. In una feed forward neural network con $m$ input e $n$ output la complessità è $O(n \cdot m)$. I kernel di una CNN corrispondono ai pesi, il tempo di calcolo è $O(k \cdot n)$.
 - Condivisione dei parametri (pesi) &rarr; nelle CNN il kernel scorre lungo l'input, i pesi vengono usati più volti perchè ci si sposta solo di una posizione. Nelle FNN i pesi invece vengono utilizzati una volta sola. 
 
 ### CNN vs FFN
