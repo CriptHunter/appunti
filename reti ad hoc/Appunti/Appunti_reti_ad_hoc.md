@@ -874,7 +874,7 @@ La ridondanza di sensori, cammini e notifiche permette di avere una buona affida
 
 $p$ è il tasso di errore sul canale. Con un cammino di $n$ hop tra sorgente e destinazione la probabilità che non subisca errore è $(1-p)^n$ . Gli hop sono piccoli quindi i cammini sono lunghi. Invece che operare end to end si opera hop by hop. Si cerca di essere affidabili sul singolo hop. Si usano NACK al posto che ACK, tutti i nodi che ricevono non comunicano, i nodi che non hanno ricevuto fanno NACK. I NACK agiscono su un singolo hop, si recupera subito senza instradare il NACK fino alla sorgente.
 
-## Pump slowly, fetch quickly
+## Pump slowly, fetch quickly (PSFQ)
 
 - **Fetch quickly** &rarr; se qualcosa va storto si cerca di recuperare (fetch) il messaggio che non è arrivato a destinazione
 - **Pump slowly** &rarr; iniettare i dati nella rete lentamente in modo da permettere ai nodi che non ricevono i messaggi di avere il tempo di recuparare prima di immettere nuovi dati nella rete
@@ -963,6 +963,82 @@ I nodi che rispondono ai nack non devono inviare tutti i messaggi richiesti, ma 
 
 1. Nella fase di PUMP i nodi mettono i cache i messaggi e pescano il ritardo casuale tra $T_{min}$ e $T_{max}$. Se ricevono un messaggio uguale per la quarta volta, buttano via il messaggio e cancellano anche la ritrasmissione. Questo perché ci sono già altri 4 nodi che stanno reinoltrando il messaggio e dopo 4 la probabilità di successo non aumenta di molto.
 2. Nella fase di FETCH si limita il numero di tentativi di un nodo di recuperare un messaggio.
+
+### Formato messaggi
+
+#### Inject
+
+Messaggio generato dallo user node da iniettare nella rete
+
+![image-20200421121646830](image-20200421121646830.png)
+
+- file ID &rarr; univoco
+- file length &rarr; consente ai nodi che ricevono le informazioni di capire se hanno ricevuto l'intero file 
+- seq# of the segment &rarr; per riordinare i segmenti e per capire se c'è un gap
+- payload
+- TTL
+  -  report bit 
+  - TTL vero e proprio
+
+#### NACK
+
+![image-20200421121953151](image-20200421121953151.png)
+
+- fileID &rarr; Il nodo che è nella fase di fetch deve indicare che file vuole
+
+- file length &rarr; lunghezza del file che si aspetta di ricevere
+
+- loss window &rarr; indica l'ultimo messaggio ricevuto prima del gap e il primo messaggio ricevuto dopo il gap. Indicare quali sono gli estremi per indicare una loss fa risparmiare spazio ed è più semplice per il parsing perché è composta solo da due numeri interi. Inoltre le interferenze di solito portano a perdere più pacchetti in sequenza (burst di errore)
+- {neighbor ID, signal quality} &rarr; vicino preferito che ha un segnale più forte. È un campo opzionale. Il neighbor ID è un indirizzo di livello 2 che il nodo conosce dopo aver ricevuto un beacon dal vicino
+
+#### Report
+
+![image-20200421183414152](image-20200421183414152.png)
+
+- relay ID &rarr;  chi ha generato il messaggio
+- <node, ID, seq#> &rarr; il nodo successivo (in report mode) che riceve un report, aggiunge al report il proprio identificatore e reinoltra di nuovo il report.
+
+### Problema del last ACK
+
+Un nodo sta ricevendo una serie di messaggi e ad un certo punto non riceve più nulla. Per quella destinazione sono indistinguibili il in cui il trasferimento è davvero finito oppure il caso in cui la destinazione non riceve più niente perché tutti i messaggi successivi all'ultimo ricevuto sono andati persi per problemi di rete. Il nodo si rende conto di non aver ricevuto tutto confrontando la lunghezza dei dati ricevuti con la file length dei messaggi di inject. 
+
+#### Last ACK: soluzione 1
+
+Recupero proattivo invece che reattivo:
+
+- Il nodo sospetta di aver perso qualcosa
+
+- Se non riceve nulla per un tempo $T_{pro}$ manda un NACK con TTL 1
+$$
+  T_{pro} = min[\alpha(S_{max} - S_{last}) T_{max}, \; \alpha \cdot n \cdot T_{max}]
+$$
+  Questo perché:
+  
+  $\alpha(S_{max} - S_{last}) * T_{max}$
+
+  - $T_{max}$ è il tempo massimo dopo il quale un nodo intermedio reinoltra un messaggio che ha ricevuto
+- $S_{max}$ è il massimo numero di sequenza dell'ultimo segmento che il nodo deve ricevere. Si ricava dividendo file lenght per la dimensione dei messaggi che riceve
+  - $S_{last}$ è l'ultimo segmento ricevuto
+
+  Aspetto il massimo tempo disponibile per il quale ho ricevuto tutti i segmenti
+
+  $\alpha \cdot n \cdot Tmax$
+
+  - $n$ è il massimo numero di messaggi che un nodo può immagazzinare nella cache. Se un nodo può immagazzinare al più $n$ messaggi in cache, allora il messaggio più vecchio nella cache viene eliminato dopo al massimo $n \cdot T_{max}$. Se un nodo deve richiedere un messaggio deve farlo prima che venga eliminato dalla cache degli altri nodi.
+  
+  $\alpha$ è un parametro $\ge 1$, tanto più alto quanto peggiore è il canale. Se il canale non è problematico $\alpha$ si mette 1.
+
+#### Last ACK: soluzione 2
+
+Tutti i dati stanno in un unico messaggio. Un nodo che non riceve nulla può pensare che non gli sono stati inviati dati. Se lo user node invia un singolo messaggio mette il report bit nel messaggio di inject a 1, questo bit fa in modo che i nodi al posto che un NACK mandino un positive ACK. Non è possibile però usare un ACK delle reti tradizionali perchè gli ACK dei vari nodi potrebbero collidere tra loro.
+
+Il nodo che riceve un inject con report bit a 1 controlla se il TTL non è esaurito e inoltra il messaggio in downstream. Se il TTL è 1 invece non reinoltra perché è un nodo foglia e va in report mode. Il nodo genera un ACK con identificatore nodo e identificatore file. I report quindi partono dai nodi foglia per poi tornare verso il sink. I nodi con TTL > 1 invece entrano in report mode, e aspettano di riceve report dai nodi più lontani
+
+Un nodo in report mode risponde dopo un tempo casuale in $[0, \Delta]$ per desincronizzarsi dagli altri nodi nelle vicinanze. Il report viene inoltrato al proprio genitore, cioè da chi ha ricevuto il messaggio. Se un nodo non riceve report entro un tempo $T_{report}$ genera autonomamente un report. Il $T_{report}$ è più grande per i nodi più vicini al sink, perchè questi nodi devono aspettare che i report arrivino da lontano dai nodi foglia. Questo meccanismo di ACK è un ottimo esempio di aggregazione dei dati nel mezzo della WSN.
+
+Se un nodo riceve un report message pieno allora genera un suo report e inoltra prima il nuovo report e poi il report pieno. Se facesse il contrario il nodo upstream riceverebbe un report pieno e quindi andrebbe a generare inutilmente un nuovo report. Inviando prima il report vuoto il nodo upstream aggiunge il suo identificatore al report vuoto e poi inoltra il report pieno.
+
+
 
 
 
