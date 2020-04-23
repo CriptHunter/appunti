@@ -807,3 +807,79 @@ gradle init --type java-application  #tipo già conosciuto da Gradle
 ```
 
 Nelle cartelle create da Gradle c'è anche il file *gradlew*, un wrapper che permette di scaricare la versione corretta di Gradle per compilare il programma.
+
+# Ultima parte del corso
+
+## La suddivisione del lavoro sw
+
+### Isolamento
+
+L'ideale sarebbe avere dei componenti che possono essere progettati e sviluppati in isolamento. Con isolamento si intende che per sviluppare la propria parte basta conoscere solo un'astrazione del resto, non significa che la parte di codice che si sta sviluppando è totalmente isolata, perché altrimenti sarebbe un programma a sè stante. L'utilità è parallelizzare il lavoro e avere specialisti di ogni settore. 
+
+Uno sviluppatore che vuole usare componenti di un altro gruppo di lavoro vuole conoscere il comportamento in:
+
+- situazioni fisiologiche &rarr; correttezza, quando funziona
+- situazioni patologiche &rarr; robustezza, casi particolari in cui non funziona
+
+### Correctness & robustness
+
+**Correctness:**
+
+The degree to which a system or component is free from faults in its specification, design, and implementation.
+
+**Robustness:**
+
+The degree to which a system or component can function correctly in the presence of invalid inputs or stressfull environmental condition.
+
+### What & How
+
+Una specifica è la descrizione delle proprietà del componente utilizzato per risolvere un problema (a sua volta definito dai requisiti di progetto). Le specifiche perciò sono una descrizione delle parti che compongono la soluzione: le modalità computazionali però sono lasciate impredicate.
+
+*Esempio:* se consegno una busta nella buca delle lettere non mi interessa come viene consegnata ma solo che arrivi davvero a destinazione.
+
+### La suddivisione non è isolamento
+
+Perry & Evangelist nel 1985 identificano una serie di "interface fault" che sono ancora attuali al giorno d'oggi. Loro sono andati ad analizzare grandi pezzi di software e a classificare i bug di incomprensione tra What & How. Molti problemi dell'ingegneria del software avvengono su incomprensioni tra sviluppatori.
+
+Esempi:
+
+- data structure alteration &rarr; un componente sviluppato come mutabile viene preso da altri come immutabile o viceversa
+- resource dallocation &rarr; chi ha le responsabilità di fare malloc e free?
+
+## Tecnica delle asserzioni
+
+Un'asserzione è un'espressione logica che specifica lo stato di un programma in un punto del processo. È un meccanismo che permette di rendere esplicite le assunzioni che sta facendo lo sviluppatore su determinati punti del suo programma. È la maniera con la quale è possibile fare emergere il prima possibile gli interface fault. 
+
+In C c'è la funzione assert:
+
+```c++
+#include <assert.h>
+void assert(scalar, expression);
+```
+
+Se la macro NDEBUG è stata definita nel momento in cui `<assert.h>` è stata inclusa, la macro `assert()` non genera codice, e quindi non fa nulla
+
+### Usi delle asserzioni
+
+Nel 1992 nasce un preprocessore in grado di trasformare commenti in asserzioni
+
+```c
+int square_root(int x);
+/*@
+	assume x >= 0;
+	return y where y >= 0;
+	return y where y*y <= x;
+	&& x < (y+1)*(y+1)
+@*/
+```
+
+```c
+void swap(int* x, int* y)
+{
+	*x = *x + *y;
+    *y = *x - *y;
+    /*@ assert *y == in *x; @*/
+    *x = *x - *y;
+}
+```
+
