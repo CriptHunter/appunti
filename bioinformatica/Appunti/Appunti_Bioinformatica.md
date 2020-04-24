@@ -1,5 +1,3 @@
-# 			Appunti Bioinformatica
-
 # Introduzione
 
 - Svolgimento di un progetto software per 3 persone o discussione articolo scientifico
@@ -507,7 +505,7 @@ $$
 
 ### Cross correlation
 
-Formula cross-correlation 1-D:
+**Formula cross-correlation 1-D:**
 $$
 S(i,j)=\sum_m(i+m)K(m)
 $$
@@ -526,6 +524,14 @@ Sposto il kernel di una posizione. Il kernel può essere visto come un vettore d
 
 Si forma una matrice con 4 righe, e n colonne, con n numero di nucleotidi nella sequenza.
 
+**Formula cross correlation 2-D:**
+$$
+S(i,j) = \sum_m \sum_n I(i+m, j+n)K(m,n)
+$$
+**Esempio**:
+
+<img src="image-20200424095234753.png" alt="image-20200424095234753" style="zoom:150%;" />
+
 ### Vantaggi CNN
 
 - Il kernel ha una dimensione minore dell'input, il vantaggio è il valore della complessita spaziale e temporale della rete neurale. In una feed forward neural network con $m$ input e $n$ output la complessità è $O(n \cdot m)$. I kernel di una CNN corrispondono ai pesi, il tempo di calcolo è $O(k \cdot n)$.
@@ -535,17 +541,17 @@ Si forma una matrice con 4 righe, e n colonne, con n numero di nucleotidi nella 
 
 ![image-20200419185456143](image-20200419185456143.png)
 
-La prima è una CNN con kernel width = 3, la seconda una FFN.
+La prima è una CNN con kernel width = 3, la seconda una FFN. La differenza è che nella CNN ogni neurone è connesso solo ad altri 3 neuroni, nelle FFN invece la connessione è completa. Anche se le CNN sono sparse alla fine le connessioni si espandono e si riescono a sfruttare tutti i dati in input
 
-### Kernel
+![image-20200422104613760](image-20200422104613760.png)
 
-- valid padding &rarr; la matrice iniziale è di dimensione maggiore rispetto alla matrice processata dal kernel
+Nelle FFN il peso di ogni neurone è usato solo da quel neurone, nelle CNN il kernel è sempre lo stesso e viene spostato su tutti i neuroni
 
-  <img src="https://miro.medium.com/max/513/1*1VJDP6qDY9-ExTuQVEOlVg.gif" alt="img" style="zoom: 67%;" />
+<img src="image-20200422104717011.png" alt="image-20200422104717011" style="zoom:80%;" />
 
-- same padding &rarr; si aggiungono degli zeri intorno alla matrice dell'input in modo tale che la matrice processata dal kernel abbia la stessa dimensione della matrice di input
+### Filtri
 
-  <img src="https://miro.medium.com/max/513/1*nYf_cUIHFEWU1JXGwnz-Ig.gif" alt="img" style="zoom:80%;" />
+Un filtro è un insieme di kernel, servono ad estrarre più feature da un set di input.  [immagine pagina 4]
 
 ### Pooling layer
 
@@ -553,9 +559,27 @@ Si prende una sottomatrice e si proietta su una nuova matrice un'operazione stat
 
 <img src="image-20200415110440643.png" alt="image-20200415110440643" style="zoom:80%;" />
 
+Servono a creare un sommario delle feature estratte. Lo stride è di quanti passi mi sposto sulla matrice per fare la statistica. In questo esempio stride = 2
+
+Il pooling layer è poco sensibile allo shift dell'input, infatti spostando l'input di una posizione l'output del layer cambia poco.
+
+![image-20200424095401010](image-20200424095401010.png)
+
+I pooling layer riducono la complessità computazionale, il numero di connessioni tra uno strato e quello successivo dipende dallo stride.
+
+I pooling layer permettono di gestire input di diverse dimensioni, se ho immagini di dimensioni diverse posso dividerle in *n* quadranti che vengono dati in input al pooling layer.
+
+### Padding
+
+Se applico un kernel di dimensione *k* senza padding ad ogni strato la dimensione dell'output diminuisce di *k - 1*. Con il padding, cioè aggiungendo valori nulli alla rete si ottiene un output di dimensione sempre uguale. Il problema è che i neuroni sul bordo usano meno input reali e più input "falsi" con valore 0.
+
+![image-20200422114239758](image-20200422114239758.png)
 
 
- 
+
+
+
+
 
 
 
