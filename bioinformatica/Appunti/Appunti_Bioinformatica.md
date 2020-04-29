@@ -79,7 +79,7 @@ Il gene è composto da 2 parti:
 1. **promoter:** non tutti i geni sono trascritti in aminoacidi e non tutti nello stesso momento. Serve un meccanismo di regolazione della trascrizione. I promoter sono regioni di un gene che fungono da interruttori. Al promoter si legano delle proteine che hanno la funzione di attivare la trascrizione. L'rna polimerasi che attiva la trascrizione è specifica per quel gene.
 2. **transcribed region:** regione usata per codificare le proteine. Ci sono due sottoparti diverse:
    1. esoni: sono le parti effettivamente codificanti
-   2. introni: non sono tradotti. La traduzione dell'RNA avviene in due 	fasi, traduzione e splicing. Lo splicing serve perchè può darsi 	che non tutti gli esoni siano inclusi nella traduzione. Ci sono 	quindi diverse combinazioni di esoni che danno via a RNA diversi e 	quindi proteine diverse dallo stesso gene  	
+   2. introni: non sono tradotti. La traduzione dell'RNA avviene in due fasi, traduzione e splicing. Lo splicing serve perchè può darsi che non tutti gli esoni siano inclusi nella traduzione. Ci sono quindi diverse combinazioni di esoni che danno via a RNA diversi e quindi proteine diverse dallo stesso gene  	
 
 ![img](./dna_copy.png) 
 
@@ -575,22 +575,34 @@ Se applico un kernel di dimensione *k* senza padding ad ogni strato la dimension
 
 ![image-20200422114239758](image-20200422114239758.png)
 
+# Prediction of cis-regulatory region
 
+## Promoter ed Enhancers
 
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Transcription_Factors.svg/1920px-Transcription_Factors.svg.png" alt="img" style="zoom:150%;" />
 
+Le regioni cis-regolatorie sono le regioni non codificanti del DNA che regolano la trascrizione dei geni vicini. La trascrizione è il processo con cui il DNA viene copiato in RNA messaggero. L'RNA messaggero poi con la traduzione viene trasformato in proteine. 
 
+Le regioni viola sono promoter, quando enzimi come l'RNA polimerasi si legano ad un promoter parte la trascrizione del DNA.  Se nessun enzima si lega il gene non si attiva e rimane silente. 
 
+Gli enhancers sono altre regioni cis-regolatorie, alcune proteine si legano agli enhancer, il DNA ha una struttura 3D e quindi gli enhancer possono entrare in contatto con promoter vicini ad altre zone e attivare ulteriormente l'RNA polimerasi per far partire la trascrizione.
 
+Gli insulator hanno la funzione di isolare gli enhancer dai promoter, impediscono che gli enhancer vengano a contatto con i promoters. Impediscono quindi l'attivazione dei promoter stessi. Le regioni trans-regolatorie regolano l'espressione dei geni a distanza.
 
+Tutte le cellule condividono lo stesso DNA ma ogni tipo di cellula si comporta in modo molto diverse dalle altre. Un ruolo importante è svolto dalla regolazione cellulare, infatti in un tipo di cellula solo una parte dei geni viene attivato e questo caratterizza funzionalmente i diversi tipi di cellule.
 
+## Paper
 
+Divisione in 7 classi:
 
+1. A-E &rarr; active enhancer
+2. I-E &rarr; inactive enhancer
+3. A-P &rarr; active promoter
+4. I-P &rarr; inactive promoter
+5. A-X &rarr; active exon
+6. I-X &rarr; inactive exon
+7. UK &rarr; unknown
 
-
-
-
-
-
-
+Le etichette delle regioni regolatorie sono state prese dal progetto Fantom, i dati sono presi dal progetto ENCODE
 
  
