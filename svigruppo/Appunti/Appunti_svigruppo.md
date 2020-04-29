@@ -808,7 +808,7 @@ gradle init --type java-application  #tipo già conosciuto da Gradle
 
 Nelle cartelle create da Gradle c'è anche il file *gradlew*, un wrapper che permette di scaricare la versione corretta di Gradle per compilare il programma.
 
-# Ultima parte del corso
+# Programmare con le asserzioni
 
 ## La suddivisione del lavoro sw
 
@@ -882,4 +882,73 @@ void swap(int* x, int* y)
     *x = *x - *y;
 }
 ```
+
+## Design by contract
+
+C'è un unico linguaggio per descrivere il progetto e l'implementazione (cosa e come). L'accordo sul cosa si scrive in un linguaggio formale, ma rispetto agli altri linguaggi formali lo si usa poi anche per l'implementazione del progetto. In termini informali un contratto è un accordo sul cosa.
+
+### Hoare triple
+
+Le triple di Hoare sono un metodo assiomatico molto vecchio per verificare formalmente i programmi. Sono stati inventati pensando ad i programmi come diagrammi di flusso. Eiffel usa le triple di Hoare per scrivere i contratti invece che per fare una dimostrazione. 
+
+{P}S{Q}
+
+- S &rarr; componente che fa qualcosa
+
+- P &rarr; precondizioni di S
+
+- Q &rarr; postcondizioni di S
+
+Se il mondo si trova in una situazione che soddisfa le precondizioni P e se S termina allora S porta il mondo in una situazione che verifica Q.
+
+### Contratti
+
+Lo sviluppatore scrive S, il client utilizza S. Il contratto vincola entrambi i contraenti. Lo sviluppatore assume che il mondo sia nello stato P. Questo è una grande vantaggio perché lo sviluppatore può escludere tutto ciò che non soddisfa P.  Il client ha l'obbligo di usare S solo in una condizione che rispetti P, e se la chiama in una situazione che rispetta P ha la garanzia che al termine di S il mondo sarà in Q.
+
+Quando Q è true l'implementazione è facile perchè Q è vera per ogni risultato. Se P è False nessun cliente può portare la situazione in un mondo P. Weakest precondition Q o strongest precondition P derminano il ruolo di una feature.
+
+## Eiffel
+
+Eiffel è un linguaggio object-oriented che introduce i contratti nell'interfaccia della classi.
+
+```
+feature
+	decrement is			--decrease counter by one
+require
+	item > 0				-- pre-condition
+do
+	item := item - 1		--implementation
+ensure
+	item = old item - 1		--post-condition
+```
+
+Eiffel è esplicitamente progettato come "linguaggio di progetto" e non solo "di programmazione".
+
+### Gergo di Eiffel
+
+Eiffel un gergo diverso rispetto ai tradizionali linguaggi di programmazione:
+
+- feature &rarr; attributi e metodi, non c'è distinzione
+- cluster &rarr; package
+- := &rarr; =
+- check &rarr; asserzioni
+- require, ensure &rarr; pre / post-condizioni
+- invariant &rarr; invarianti di classe, proprietà che non cambiano di un oggetto (esempio: in un orologio le ore vanno sempre tra 1 e 24)
+- loop invariant &rarr; asserzione all'interno di un loop
+- rescue &rarr; catch
+
+### Trattamento delle situazioni anomale
+
+In Eiffel un'eccezione si verifica quando il contratto viene violato. Nei normali linguaggi di programmazione l'unica cosa elaborabile è l'eccezione sollevata. In Eiffel il sistema ferma tutto, ed è possibile tornare indietro, al mondo prima dell'eccezione. 
+
+Ci sono due modalità:
+
+- Failure (organized panic) &rarr; di solito il codice nel catch, si fa pulizia per evitare ulteriori problemi
+- Retry &rarr; si torna alla situazione prima dell'eccezione, per evitare un loop infinito è meglio tener conto di aver già fatto retry
+
+
+
+ 
+
+
 
