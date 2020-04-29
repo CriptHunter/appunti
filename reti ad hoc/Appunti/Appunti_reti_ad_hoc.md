@@ -1013,7 +1013,7 @@ $$
   T_{pro} = min[\alpha(S_{max} - S_{last}) T_{max}, \; \alpha \cdot n \cdot T_{max}]
 $$
   Questo perché:
-  
+
   $\alpha(S_{max} - S_{last}) * T_{max}$
 
   - $T_{max}$ è il tempo massimo dopo il quale un nodo intermedio reinoltra un messaggio che ha ricevuto
@@ -1038,7 +1038,93 @@ Un nodo in report mode risponde dopo un tempo casuale in $[0, \Delta]$ per desin
 
 Se un nodo riceve un report message pieno allora genera un suo report e inoltra prima il nuovo report e poi il report pieno. Se facesse il contrario il nodo upstream riceverebbe un report pieno e quindi andrebbe a generare inutilmente un nuovo report. Inviando prima il report vuoto il nodo upstream aggiunge il suo identificatore al report vuoto e poi inoltra il report pieno.
 
+# Slide 6
 
+## Requisiti localizzazione
 
+- **operatività in condizioni avverse** &rarr; due nodi riescono a comunicare solo se sono in line of sight, e si considerano tra loro vicini. Invece due nodi alla stessa distanza ma con un ostacolo in mezzo non riescono a comunicare e non si considerano vicini. Gli ostacoli possono essere grandi oggetti fisici, oggetti metallici riflettenti o l'acqua
+- **limitare dispendio energetico**
+- **accuratezza della misura e granularità** 
+- **disponibilità o meno dell'infrastruttura** &rarr; il GPS sfrutta una rete di satelliti già esistente per determinare la posizione. I nodi anchor sono quei nodi che conoscono la loro posizione e possono aiutare altri nodi a ricavare la loro. Non è garantito che esista un qualsiasi tipo di infrastruttura per la rilevazione della posizione
+- **non cooperative / cooperative target** &rarr;  se l'oggetto da localizzare emette o non emette i segnali. In questo corso si considerano gli oggetti cooperativi
+- **mobilità o meno dei nodi** &rarr; se c'è la certezza che i nodi non si muovono, si può usare una procedura di localizzazione molto precisa che verrà eseguita una sola volta. Se i nodi sono mobili c'è un consumo periodico di energia usato per la localizzazione
 
+## Relazioni tra sensori
+
+### Prossimità
+
+La prossimità tra due nodi determina se sono in reciproco raggio radio. Ritorna un booleano con valore on / off. È imprecisa perché non ritorna nessuna informazione sulla distanza tra i due nodi.
+
+![image-20200426130854085](image-20200426130854085.png)
+
+Supponiamo che i punti neri sono degli anchor point, questi nodi sono stati piazzati e hanno memorizzate le loro coordinate assolute. Se un nodo riesce a sentire 3 anchor point si trova nell'area di intersezione dei tre cerchi.
+
+![image-20200426131148199](image-20200426131148199.png)
+
+La potenza del segnale decresce con il quadrato della distanza; inoltre il raggio radio non è un cerchio perfetto perché dipende dalle caratteristiche dell'ambiente.
+
+### Distanza
+
+####  RSSI
+
+La misura della potenza si indica con received signal strength indicator (RSSI). Le due parti devono essere d'accordo su qual è la potenza del segnale emesso alla sorgente. La potenza viene trasformata da mW a dBm.
+$$
+x = 10log_{10}(P/1mW)
+$$
+
+- **exponential decay** &rarr; $\frac{1}{R^2}$
+- **in guide d'onda** &rarr; $\frac{1}{R^{1.5}}$ perché una guida d'onda è qualcosa che mantiene il segnale in linea retta come un corridoio
+- **vicino al terreno** &rarr; $\frac{1}{R^4}$ perché il terreno assorbe il segnale
+
+Il multipath fading è quel fenomeno per cui con antenne omnidirezionali il segnale si propaga in tutte le direzioni e può essere riflesso da muri e oggetti, entrare in collisione con il segnale originale e a seconda della differenza di fase tra i due segnali le onde si sommano o si sottraggonno. Se si sommano la potenza del segnale è maggiore, se si sottraggono la potenza è minore.
+
+#### Time of arrival
+
+- **Round-trip time** &rarr; Per misurare la distanza tra due nodi posso usare il round-trip time, cioè calcolo il tempo che il segnale ci mette ad arrivare a destinazione e ritornare alla sorgente. È lo stesso sistema usato dal Ping. Ci sono due implementazioni di Ping: nella prima la destinazione risponde immediatamente, è soggetta ad attacchi Dos. La seconda implementazione risponde solo quando non ha nient'altro da fare, in questo caso il round trip time non è accurato. 
+
+- **Time of arrival (TOA)** &rarr; Si utilizzano orologi sincronizzati per tutti i nodi, il problema è che non è semplice mantenere gli orologi sincronizzati.
+
+- **Time difference of arrival (TDOA)** &rarr; Dalla sorgente si inviano due segnali a velocità diverse. Il ricevente calcola la differenza di tempo di arrivo dei due segnali e stima la distanza. Si possono usare per esempio frequenze radio e ultrasuoni. Questo richiede di avere un hardware in grado di trasmettere e ricevere due tipi di segnali diversi.
+
+#### Array di antenne
+
+Tante antenne montate su un oggetto ricevente a distanza nota tra loro. La sorgente invia un beacon che viene ricevuto da tutte le antenne che si trovano a distanza diversa. La velocità della luce è costante, la distanza tra le antenne e l'angolo di arrivo del segnale sono noti. Si usano questi parametri per stimare la distanza tra sorgente e ricevente. È necessario hardware aggiuntivo (array di antenne) di dimensioni non trascurabili.
+
+![image-20200428091310523](image-20200428091310523.png)
+
+#### Segnali acustici
+
+Non soffrono del problema del multipath fading, il loro comporamento è sempre $\frac{1}{R^2}$, il segnale non è riflesso ma assorbito da tutte le superfici e quindi sorgente e destinazione devono essere perfettamente in line of sight. L'hardware di trasmittente e ricevente è più grande di quello necessario per le onde radio.
+
+## Trilaterazione
+
+La triangolazione richiede la misura dell'angolo di arrivo del segnale, si usa invece la trilaterazione che richiede solo la misurazione di distanze.
+
+Un sensore che si trova stima la distanza tra sé e tre nodi anchor, il punto in cui le tre circonferenze si incontrano è la posizione del sensore.
+
+![image-20200428103954290](image-20200428103954290.png)
+
+Sistema di 2 equazioni in due variabili che rappresentano due circonferenze:
+
+$$
+\begin{cases}
+  R1^2 = (x-\alpha)^2 + (y-\beta)^2 \\
+  R2^2 = (x-\alpha)^2 + (y-\beta)^2 \\
+\end{cases}
+$$
+Si ottengono 2 soluzioni, aggiungendo un terzo cerchio si trova la coppia *(x, y)* corretta.
+
+Il GPS utilizza la trilaterazione in uno spazio 3D, sono necessarie 4 sfere perchè l'equazione della sfera è:
+$$
+R^2 = (x-\alpha)^2+(y-\beta)^2+(z-\gamma)^2
+$$
+Gli anchor point hanno memorizzate la loro posizione assoluta o relativa, la posizione del nodo ricavata dagli anchor può essere quindi assoluta o relativa. Gli anchor devono essere piazzati in modo tale che ogni nodo sia nel raggio di comunicazione di almeno tre anchors. Una soluzione alternativa è avere degli anchor mobili dotati di GPS, possono essere UGV (veicolo terrestre non pilotato) oppure UAV (droni che volano). Si muovono seguendo una determinata traiettoria, ogni volta che rilevano un sensore che emette dei beacon si muovono in 3/4 posizioni vicine al nodo per permettergli di fare trilaterazione.
+
+## Global positioning system
+
+Costellazione di 24 satelliti in orbita non geostazionaria (orbita bassa), costa meno carburante portare i satelliti in orbita bassa ma il satellite non punta sempre sulla stessa porzione di superficie terrestre. I satelliti forniscono una posizione assoluta in 3D e l'orario. Il GPS funziona solo all'esterno e in line of sight, la precisione per usi civili è entro i 15m. La ricezione del segnale GPS è costoso in termini di energia, ma in wireless sensor network con sensori fermi basta rilevare la posizione una sola volta.
+
+### Stima distanza in GPS
+
+Il ricevente sceglie i 4 satelliti da cui riceve meglio, rimane in ascolto (lock) perché deve ricevere una raccolta di informazioni chiamate effemeridi che descrivono l'orbita del satellite. Le effemeridi sono trasmesse ogni 30s e possono servire fino a 24 trasmissioni per avere un orbita completa, può richiedere quindi fino a 24 minuti. Il nodo può memorizzare le effemeridi in un almanacco e utilizzare entro un raggio di 100 km e per un tempo massimo di due mesi. Le effemeridi trasmettono anche un codice di cifratura generato in modo pseudocasuale e anche con quale schema è stato cifrato. Il nodo guarda nell'almanacco quando il satellite invierà un segnale con quel codice. Il nodo si sincronizza con i 4 orologi dei satelliti e usa il time of arrival per determinare la distanza dal satellite.
 
