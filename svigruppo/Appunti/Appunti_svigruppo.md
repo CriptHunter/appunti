@@ -946,9 +946,69 @@ Ci sono due modalità:
 - Failure (organized panic) &rarr; di solito il codice nel catch, si fa pulizia per evitare ulteriori problemi
 - Retry &rarr; si torna alla situazione prima dell'eccezione, per evitare un loop infinito è meglio tener conto di aver già fatto retry
 
+### Contratti ed ereditarietà
 
+Il principio di sostituzione di Lisvov stabilisce che se si vuole sostituire S' a S, e S' non rompe il sistema in cui è inserito allora:
 
- 
+- le nuove precondizioni devono essere uguali a quelle di prima o avere meno vincoli
+- le nuove precondizioni devono essere uguali a quelle di prima o più stringenti
 
+Il principio di Liskov non è computabile in maniera efficiente e quindi non teoricamente non si può fare un controllo automatico sulla correttezza dell'ereditarietà
 
+### Principio di sostituibilità
+
+Il principio di sostituibilità serve a fare in modo che l'implicazione sia valida per costruzione, e in Eiffel si possono costruire solo contratti che rispettano il principio di Liscov. 
+$$
+PRE_{derived} = PRE_{parent} \or P \;\;\;\;\;\;PRE_{parent} \Rightarrow PRE_{derived}
+$$
+
+$$
+POST_{derived} = POST_{parent} \and Q \;\;\;\;\;\;POST_{derived} \Rightarrow POST_{parent}
+$$
+
+In Eiffel: `require else` e `ensure then`.
+
+Il principio di Liscov è limitante in alcuni casi:
+
+Animale &rarr; Mucca
+
+L'animale ha un metodo mangia con parametro cibo perché è un animale generico. Quando però si specializza nella mucca che è un animale, e che quindi ha un metodo mangia, sarebbe bello poter dire che non mangia semplicemente cibo ma specificare che mangia l'erba. Dicendo erba però non è rispettato il principio di Liscov. Le precondizioni del mangiare si stringono perché da tutti i cibi passo ad avere solo l'erba.
+
+Java e C++ si comportano in questo modo, sono invarianti. Eiffel invece è covariante. Se si permette che la mucca mangi l'erba può succedere che nel metodo che si sta chiamando la variabile è staticamente cibo ma dinamicamente erba perchè la mucca staticamente è animale ma dinamicamente mucca. 
+
+Quindi Eiffel scegli l'espressività del linguaggio piuttosto che il principio di Liscov ma inserisce le catcall per controllare i tipi.
+
+## Separation of concern
+
+**Code tangling:**  
+Un componente contiene codice che si riferisce a diverse problematiche (sicurezza, concorrenza...)
+
+**Code scattering:**
+Il codice che si riferisce ad un concern risulta disperso fra più componenti
+
+### Observer
+
+![image-20200430144251806](image-20200430144251806.png)
+
+Ho un insieme di classi e voglio che facciano tutte parte del pattern observer. Point rimane una classe, ma tutta l'interfaccia observer per non essere trasversale va gestita in modo particolare. 
+
+### AOP
+
+Le parti tratteggiate sono codice ripetuto in entramble le classi
+
+![image-20200430151829389](image-20200430151829389.png)
+
+Posso separare il codice in una nuova classe
+
+![image-20200430152009405](image-20200430152009405.png)
+
+La composizione dei pezzi non è fatta automaticamente ma c'è un weaver che intreccia aspetti e classi andando a prendere punti del programma che sono stati marcati come interessanti dal programmatore.
+
+### Weaving
+
+- java methods: codice normale
+- pieces of advice: codice che indica le parti interessanti nel programma
+- weaving: incastra gli advice nel codice a compile time
+
+![image-20200430153300648](image-20200430153300648.png)
 
