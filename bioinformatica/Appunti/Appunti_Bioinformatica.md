@@ -603,6 +603,6 @@ Divisione in 7 classi:
 6. I-X &rarr; inactive exon
 7. UK &rarr; unknown
 
-Le etichette delle regioni regolatorie sono state prese dal progetto Fantom, i dati sono presi dal progetto ENCODE
+Le etichette delle regioni regolatorie sono state prese dal progetto Fantom, i dati sono presi dal progetto ENCODE.
 
  
