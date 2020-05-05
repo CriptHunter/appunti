@@ -1128,3 +1128,121 @@ Costellazione di 24 satelliti in orbita non geostazionaria (orbita bassa), costa
 
 Il ricevente sceglie i 4 satelliti da cui riceve meglio, rimane in ascolto (lock) perché deve ricevere una raccolta di informazioni chiamate effemeridi che descrivono l'orbita del satellite. Le effemeridi sono trasmesse ogni 30s e possono servire fino a 24 trasmissioni per avere un orbita completa, può richiedere quindi fino a 24 minuti. Il nodo può memorizzare le effemeridi in un almanacco e utilizzare entro un raggio di 100 km e per un tempo massimo di due mesi. Le effemeridi trasmettono anche un codice di cifratura generato in modo pseudocasuale e anche con quale schema è stato cifrato. Il nodo guarda nell'almanacco quando il satellite invierà un segnale con quel codice. Il nodo si sincronizza con i 4 orologi dei satelliti e usa il time of arrival per determinare la distanza dal satellite.
 
+## Localizzazione senza GPS
+
+Si suppone che ci siano diversi anchor points con un raggio radio uguale tra loro e sempre costante, e che le loro antenne siano omnidirezionali con una propagazione del segnale ideale a forma di sfera perfetta. Gli anchor points mandano beacon periodici desincronizzati nel tempo per far conoscere la loro posizione ai sensori.
+
+![image-20200503100506852](image-20200503100506852.png)Nell'immagine a sinistra un sensore sente il segnale dei due anchor points in basso, quindi si trova nella nella lunetta formata dai due cerchi. La parte alta della lunetta è da escludere perché il sensore non sente il raggio radio degli anchor points a nord.
+
+Questo metodo non è adatto indoor perché il segnale non può propagarsi in modo ideale. È diverso dalla trilaterazione perché in quel caso si misura una stima della distanza e inoltre si richiede che ogni sensore sia in grado di stimare la distanza da 3 anchor.
+
+### Metodo del centroide
+
+Il sensore conosce il raggio di trasmissione e il periodo di invio dei beacon degli anchor points. Il sensore ascolta per un tempo t e conta il numero di beacon che riceve. S è il numero di campioni da raccogliere, se un anchor manda un beacon ogni T, per prendere S campioni il sensore aspetta $t = (S+1+\epsilon)$. C'è un +1 perché il sensore potrebbe mettersi ad ascoltare subito dopo che un anchor ha mandato un beacon. $\epsilon$ è perchè gli orologi del sensore non sono precisi.
+
+Si può calcolare la metrica di connettività $CM_i$,  per l'anchor i:
+$$
+CM_i = 100 \cdot Nrecv(i,t) / Nsent(i,t) = 100 \cdot Nrecv(i,t)/S
+$$
+Questa metrica indica i beacon ricevuti rispetto a quelli che il sensore dovrebbe aver ricevuto. Si discriminano con una soglia gli anchor da cui si riceve bene da quelli da cui si riceve male. Si considerano solo gli anchor che superano la soglia.
+
+Il centroide è la media geometrica di tutte le k coordinate che il sensore sente:
+$$
+(X_{est}, Y_{est}) = \sum X_{ij} / k, \sum Y_{ij}/k
+$$
+Sperimentalmente la posizione con anchor point con S = 20 varia tra 2m e 4.5m
+
+### Footprint
+
+Si piazzano in un ambiente indoor delle sorgenti di segnale che si limitano a indicare nei beacon il loro identificatore senza la posizione. Si divide l'ambiente con una griglia a granularità da decidere. Lo staff tecnico con un dispositivo uguale a quello che useranno i frequentatori dell'area si posiziona in ogni punto della griglia (vertici dei quadrati) e misura da quali sorgenti di segnali si ricevono i beacon e la RSSI (received signal strenght). Si costruisce una mappa che indica in ogni punto della griglia da chi si riceve e con che potenza. Questa mappa è molto dipendente dalla struttura dell'ambiente, la mappa viene messa su un dispositivo all'ingresso dell'area indoor. Ogni utente può scaricare un'applicazione che conosce la mappa e che si interfaccia con bluetooth o wifi. Il segnale rilevato dal dispositivo viene confrontata con la mappa e si trova il punto che più assomiglia al punto sulla mappa e si sceglie quella come posizione stimata.
+
+# Slide 7
+
+## Vehicular Ad-hoc NETwork
+
+Rete costituita da dispositivi wireless a bordo di veicoli ed eventuali apparati a lato strada. L'obbiettivo è creare degli Intelligent Transport System (ITS) per:
+
+- comunicazione in-vehicle
+- comunicazione tra veicoli 
+  - car-to-car &rarr; macchine, autobus, tram...
+  - machine-to-machine &rarr; oggetti che si muovono ma che non necessariamente hanno a bordo esseri umani. 
+- comunicazione tra veicoli e infrastruttura
+- altri sistemi di trasporto come ferroviario, aereo e marittimo
+
+<img src="image-20200503112210286.png" alt="image-20200503112210286" style="zoom:150%;" />
+
+### Infrastruttura VANETs
+
+**AU - Application Unit:**
+Oggetti elementari per veicolo e passeggeri.
+
+**OBU - On Board Unit:**
+Sovraintende alla guida del veicolo e in futuro guida autonoma indipendente. Sono in grado di comunicare con altri OBU o con RSU.
+
+**RSU - Roadside Unit:**
+Estende il range di comunicazione dei veicoli, possono avere memoria in cui fare buffer di contenuti, avere delle applicazioni e essere connesse a internet dando anche accesso  a informazioni per i passeggeri.
+
+### Domini di comunicazione
+
+**In-vehicle:**
+comunicazione tra sensori e/o parti del veicolo (AUs) sfruttando OBU
+
+**Ad-hoc:**
+
+- V2V - vehicle to vehicle tra OBUs
+- V2I - vehicle to infrastructure tra OBUe RSU
+
+**Infrastractural:**
+Connessione di RSU o OBU a internet
+
+### 802.11: basic service set
+
+**BSSID:**
+Basic service set ID, è il MAC address dell'access point, identifica un gruppo.
+
+**SSID:**
+Service set ID, stringa significativa per gli umani che indica i tipi di contenuti in quel gruppo.
+
+**IBSS:**
+Indipendent BSS, il BSSID è il MAC address dell'iniziatore.
+
+![image-20200505121431277](image-20200505121431277.png)
+Negli Extended SS gli access point cooperano tra di loro per avere una definizione comune del gruppo (SSID comune) e per la comunicazione tra dispositivi in celle diverse. Il BSSID è il MAC address dell'iniziatore, se l'iniziatore sparisce, sparisce anche il gruppo.
+
+**wildcard BSSID:**
+Si inviano i dati ad un MAC address con 48 bit a 1
+
+Ci vogliono diversi secondi per fare il setup della comunicazione in WIFI, un tempo inadeguato per le VANETs.
+
+### 802.11p WAVE
+
+Non è tanto la mobilità dei nodi che rende difficile la comunicazione, perchè se i nodi si muovono a velocità omogenea cambia la loro posizione assoluta ma non la posizione relativa. Diverso è il caso delle automobili, in cui i link tra i nodi cambiano continuamente e le velocità dei nodi non sono trascurabili, due automobili in direzione opposta hanno una velocità totale pari alla somma delle loro velocità. Quindi è necessario avere una comunicazione molto rapida tra i nodi.
+
+Come gli altri 802.11 è uno standard per WLAN (wireless local area network). Lo spettro scelto per la comunicazione è quello intorno ai 5.9 GHz, è "free but licensed". Si possono produrre liberamente apparati che emettono frequenze nei 5.9 GHz ma non sono utilizzabili fino a quando non si ottiene una licenza (gratuita) dallo stato che garantisce la conformità degli apparati con 802.11p WAVE. In questo modo il costo delle auto non aumenta e contemporaneamente si evitano interferenze con altri dispositivi non certificati.
+
+WAVE utilizza 7 canali diversi:
+
+- parte grigia &rarr; intervallo di guardia che funziona da divisore con gli apparati che trasmettono a frequenze vicine a 5.9 GHz
+- canale verde &rarr; canale di controllo, utilizzabile solo per applicazione di safety stradale, non vengono mandati dati ma solo informazioni necessarie per coordinare i veicoli all'accesso a WAVE
+- canale azzurro &rarr; per messaggi brevi tra veicoli vicini per evitare tamponamenti e incidenti
+- canale rosso &rarr; per la comunicazione su lunga distanza (anche su più hop) come notifiche di allerta in prossimità di intersezioni, incidenti ecc...
+- 4 canali rosa &rarr; canali di servizio per applicazioni utente come parcheggi, attrazioni turistiche ecc...
+
+WAVE ha una banda di 2 Mbps e un raggio radio di 300m.
+
+Tutti i veicoli hanno almeno 2 radio, una è sempre connessa alla wildcard BSSID (canali di safety), e un'altra radio che trasmette sugli altri canali (canali di servizio). Con un solo beacon e senza negoziazione manda un segnale a tutti i dispositivi in range radio per poter accedere ad una BSSID non safety.  Non c'è il concetto di iniziatore come in 802.11, e chi ha creato una BSSID (usando un valore random invece che il MAC address) può lasciare il gruppo senza distruggerlo.
+
+<img src="image-20200505122656112.png" alt="image-20200505122656112" style="zoom:80%;" />
+
+> Il MAC layer è il data link layer
+
+### Performance 802.11p vs LTE
+
+LTE in-coverage: comunicazione con antenna
+
+LTE out-of-coverage: comunicazione ad-hoc senza antenna
+
+![image-20200505130230428](image-20200505130230428.png)
+
+![image-20200505130252203](image-20200505130252203.png)
+
