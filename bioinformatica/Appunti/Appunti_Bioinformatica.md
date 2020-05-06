@@ -593,6 +593,8 @@ Tutte le cellule condividono lo stesso DNA ma ogni tipo di cellula si comporta i
 
 ## Paper
 
+Il problema affrontato nel paper è la predizione delle regioni regolatorie attive per diverse linee cellulari. Se le regioni regolatorie subiscono delle mutazioni, la regolazione della cellula viene alterata e questo può portare a patologie.
+
 Divisione in 7 classi:
 
 1. A-E &rarr; active enhancer
@@ -603,6 +605,17 @@ Divisione in 7 classi:
 6. I-X &rarr; inactive exon
 7. UK &rarr; unknown
 
-Le etichette delle regioni regolatorie sono state prese dal progetto Fantom, i dati sono presi dal progetto ENCODE.
+Le etichette delle regioni regolatorie sono state prese dal progetto Fantom, i dati sono presi dal progetto ENCODE. 
 
- 
+Gli istoni sono avvolgimenti di DNA di forma diverse, le modifiche agli istoni influiscono sulle regioni regolatorie. Misurare queste modifiche dà informazioni sull'attività delle regioni, queste feature sono poi usate per addestrare una rete neurale. 
+
+### Rete neurale
+
+Le rete neurale usata ha:
+
+- 3 hidden layer con struttura a piramide
+- due sigmoidi, una per ogni classe
+- regolarizzazione l-2 &rarr; si aggiunge la norma dei pesi alla funzione obbiettivo per avere una funzione più smooth
+- numero massimo di epoche 100
+
+Il numero di active enancher è molto inferiore a quello degli inactive enancher e ci sono molti campioni unknown. Il problema è che la LM tende a imparare molto meglio la classe maggioritaria rispetto a quella minoritaria. Nel paper il 70% dei dati sono usati per il training set ma le classi maggioritarie sono state limitate a 3000 esempi. Poi è stato ribilanciato il test set per mantenere le stesse proporzioni del training set.
