@@ -1012,3 +1012,80 @@ La composizione dei pezzi non è fatta automaticamente ma c'è un weaver che int
 
 ![image-20200430153300648](image-20200430153300648.png)
 
+# Docker
+
+## Dependency hell
+
+Problemi di sviluppo del software complesso:
+
+- libraries &rarr; le parti del sistema sono fatte con linguaggi di programmazione diversi
+- services &rarr; dbms, httpd, cache, log...
+- people &rarr; spiegare ai nuovi arrivati come installare 1000 librerie, o direttamente l'organizzazione che deve preparare le macchine per essere utilizzabili
+
+## Feature desiderate
+
+Dal punto di vista del dev:
+
+- predictability &rarr; se funziona in locale deve funzionare anche sulla macchina di continuous integration
+- replicability
+- versioning &rarr; avere un sistema di versionamento che permette di far funzionare anche un sistema rimasto spento 6 mesi nonostante le librerie si siano aggiornate
+- lightweight
+
+Dal punto di vista del ops:
+
+- fault tollerance
+- portability
+- scalability
+- composability &rarr; pezzi di codice che girano anche su macchine diverse
+- scheduling & orchestration
+
+## Concetti base
+
+### Image (filesystem)
+
+Ho un immagine del filesystem e posso modificare dei file. I file non modificati si prendono direttamente dal filesystem originali, quelli modificati dall'immagine. Si crea un DAG delle modifiche del filesystem.
+
+```bash
+docker pull "nome immagine"
+```
+
+### Container 
+
+Un container è un immagine in esecuzione, viene creata una copia scrivibile del filesystem.
+
+```bash
+docker run "nome immagine"
+```
+
+Al termine dell'esecuzione il container muore.
+
+### Build
+
+Scrivere un dockerfile che descrive gli step per fare la build e la configurazione.
+
+```bash
+docker build ...
+```
+
+### Commit 
+
+Si può fare run e modificare un container e poi fare commit. Si può mettere un tag.
+
+## Running containers
+
+- ephemeral &rarr; esegue il container e rimuove tutto quando ha finito. È molto comodo per testare come funziona un programma con varie versione di un compilatore.
+
+  ```bash
+  docker run --rm "nome container"
+  ```
+
+- attached &rarr; fare run in modo iterativo di un container
+- daemonized &rarr; rimane attivo
+
+Un volta che il container è in esecuizione si possono ottenere log delle istanza in running oppure eseguire un altro processo all'interno del container.
+
+## Use cases
+
+- usare docker per compilare ed eseguire codice usando diverse versioni di un compilatore
+- 
+
