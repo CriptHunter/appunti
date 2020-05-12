@@ -1246,3 +1246,159 @@ LTE out-of-coverage: comunicazione ad-hoc senza antenna
 
 ![image-20200505130252203](image-20200505130252203.png)
 
+### Caratteristiche VANETs
+
+**Mobilità vincolata:**
+Dipende dalla topografia delle strade, dalla presenza di edifici, dalle indicazioni fornite da segnaletica e semafori, e dall'orario. La connettività è ostacolata dalla velocità dei veicoli e da molti altri elementi presenti sulle strade.
+
+**Non ci sono problemi di batteria:**
+La batteria dei veicoli si ricarica mentre sono in moto, c'è abbastanza spazio per l'hardware.
+
+**Scalabilità:**
+A seconda della zona considerata ci possono essere molti dispositivi connessi. Nella rete viaggiano molti messaggi e vanno evitate le collisioni. La soluzione è che il primo veicolo che si rende conto che c'è un problema in strada fa broadcast a tutti i suoi vicini dell'informazione che descrive l'evento specificando la sua posizione (ogni veicolo ha il GPS).  Ogni nodo vicino genera un tempo casuale per il reinoltro del messaggio per espandere più lontano l'informazione, questo tempo è tanto più piccolo quanto è più lontano il veicolo dalla sorgente. Quando il timer scade, i veicoli rifanno broadcast. La sorgente in questo modo ha un ack dell'invio del proprio messaggio. I veicoli che sentono il broadcast non rifanno il broadcast perchè è già stato fatto da qualcun'altro. In pratica rifarà broadcast il veicolo più lontano dalla sorgente ma sempre all'interno del suo raggio radio. A catena l'invio si espande a veicoli lontani. 
+
+**Densità variabile:**
+Varia in base a zona, orario, traffico. Ci sono casi in cui i veicoli sono così lontani da non essere nemmeno in raggio radio. I veicoli possono variare la loro potenza trasmissiva in base al numero di vicini, in una zona trafficata si trasmette a basso raggio per non trasmettere a troppi veicoli contemporaneamente.
+
+### Progetti su VANETs
+
+**Traffic information system:**
+
+- raccolta informazioni sul traffico
+- raccolta informazioni dei veicoli come direzione, posizione, velocità
+- mapping info geografiche su mappa stradale
+- computazione rotta ottimale
+
+**CarTel:**
+Smart vehicle capace di collezionare e analizzare dati da sensori a bordo.
+
+**myTaxi, PlanetTran, Uber:**
+Rotte intelligenti per portare più utenti seguendo una singola tratta, trovare il taxi più vicino all'utente.
+
+**C2C:**
+Car to car consortium, ha come obbiettivi:
+
+- sviluppo standar europeo per ITS (intelligent transport system)
+- armonizzazione degli standard C2C mondiali
+- scelta frequenze europee unlicensed per V2V (veichle to veichle) e V2I (veichle to infrastructure)
+- assistenza guidatore per maggiore sicurezza stradale
+- controllo del traffico
+- applicazione per guidatori e passeggeri (pagamento pedaggi, previsioni del tempo, applicazioni di intrattenimento)
+
+### Applicazioni VANETs
+
+**Intersection collision avoidance:**
+evitare collisioni ad un incrocio con poca visibilità
+
+**Public safety:**
+Segnalare l'arrivo di un'ambulanza alle altre macchine, configurare i semafori per avere un'onda verde per l'ambulanza.
+
+**Segnalazione ostacoli:**
+quando si forma una coda il guidatore può sapere che si è verificato un incidente.
+
+**Estensione segnaletica:**
+I veicoli in coda vicino ad un incidente possono mandare l'informazione a veicoli che viaggiano in direzione opposta, questa macchina porterà le informazioni indietro a macchine lontane che sapranno in anticipo dell'incidente. Altre applicazione sono la segnalazione di scuole, ospedali, ponti bassi, restringimento di strada, rilevamento stanchezza conducente, distanza di sicurezza, frenata di emergenza.
+
+### Requisiti applicazioni
+
+- comunicazioni d'**emergenza** con i dati trasmessi affidabilmente e con bassa latenza
+- **privacy** &rarr; i veicoli sono costantemente monitorati, si conosce il numero di targa e quindi il proprietario del veicolo. Tutto viaggia su canali wireless in broadcast.
+- **scalabilità**
+- **problema testing soluzioni** &rarr; è pericoloso testare le soluzioni direttamente sui veicoli reali, si possono usare dei simulatori 
+
+### Pattern di comunicazione
+
+**Unicast:**
+Si indirizza specificando il destinatario. Sarà poco usato in VANETs.
+
+**Multicast:**
+Si indirizza ad un gruppo di destinatari. Si devono preconfiguare gli apparati con degli indirizzi di gruppo. Le destinazioni devono essere conosciute (ambulanze, pattuglie polizia). 
+
+**Anycast:**
+Variante del multicast in cui si trasmette ad un destinatario qualunque di un gruppo.
+
+**Geocast:**
+Variante di broadcast/multicast, si indicano tutti i veicoli all'interno di una determinata area geografica. Al momento dell'emissione del messaggio la sorgente non ha idea di quanti sono i veicoli in quella determinata area geografica. L'insieme delle destinazioni può variare mentre il messaggio viaggia.
+
+**Geographic routing: **
+A differenza del geocasting è più simile a unicast perchè si indirizza ad uno specifico veicolo ma utilizzando l'informazione sulla posizione.
+
+# Slide 8
+
+## MANET e VANET
+
+I tradizionali algoritmi delle MANET sono poco efficaci per reti veicolari, infatti questi algoritmi sono pensati per nodi mobili ma non veloci come quelli presenti nelle VANET. Gli algoritmi tradizionali hanno un monitoring continuo della rete per aggiornare sempre la topologia della rete. Negli algoritmi per MANET non si mantiene una topologia aggiornata della rete, e nel momento in cui una sorgente genera il messaggio ci si preoccupa di scoprire la topologia della rete, trovare una rotta e instradare il messaggio. Questi algoritmi spesso ricorrono ad un flooding on-demand per scoprire la topologia. Il problema per le VANET è che questi algoritmi hanno un ritardo alto e un overhead alto (il flooding ha tempo $O(n^2)$). 
+
+**Distance effect:**
+
+![image-20200512100827337](image-20200512100827337.png)
+
+A vuole scoprire il cammino per K per inviare dei dati. Il nodo I si sposta e esce dal raggio di H e J. Nel tempo che la risposta torna ad A, il cammino non è più valido perché  J non ha più un next hop. Nelle MANET si supponeva che questo problema accadesse molto raramente, cosa non vera per le VANET.
+
+### Idee alternative per VANET
+
+Non è la sorgente a decidere il routing per la destinazione ma sceglie solamente il suo vicino migliore. Il vicino a sua volta sceglie il nodo successivo per portare il messaggio alla destinazione. È inutile costruire una conoscenza della topologia se tanto la rete cambia continuamente. Nessun nodo ha tabelle di instradamento e si preoccupa solo quando riceve un messaggio di instradarlo. Per una maggiore accuratezza è necessario conoscere dove vanno (posizioni, interessi) e chi frequentano (socialità) i nodi.
+
+## Geographic forwarding
+
+La sorgente S è riuscita a determinare le coordinate della destinazione D ma conosce solo i 4 vicini (pallini blu) nel suo raggio radio. Dato che si parla di VANET tutti i nodi hanno un GPS a bordo. S invia un messaggio al pallino blu in alto, il vicino sceglierà a sua volta il suo vicino migliore per inviare il messaggio.
+
+![image-20200512103038276](image-20200512103038276.png)
+
+**Vantaggi:**
+
+- decisioni locali che sfruttano i beacon che già viaggiano nella rete
+- adeguamento della rotta man mano che ci si avvicina alla destinazione
+- combinabile con meccanismi più complessi come abitudini dei nodi
+
+### Problemi geographic routing
+
+**Scelta del next-hop:**
+S deve inviare un messagio a D e deve scegliere a quale pallino blu inviarlo. Se scegliesse il vicino a destra sarebbe un problema perché il nodo si sta allontanando da D.
+
+![image-20200512103749601](image-20200512103749601.png)
+
+Per un inoltro più preciso si possono aggiungere informazioni sulla direzione, la velocità dei nodi ecc... questo però porta ad avere pacchetti più grandi e maggiore possibilità di collisione.
+
+**Partizione della rete:**
+Possono esserci delle zone in cui i veicoli sono molto pochi e distanti, questo crea delle partizioni nella VANET. Nelle reti opportunistiche (non VANET per ora), il nodo giallo che riceve il messaggio aspetta che ci sia un'opportunità di reinoltrare il messaggio. Si passa da un routing store and forward in cui i pacchetti vengono scartati quando non c'è un cammino, ad un approccio store carry and forward in cui se non c'è un next hop il pacchetto viene portato in giro fino a quando c'è un'opportunità di fare l'inoltro.
+
+![image-20200512104629768](image-20200512104629768.png)
+
+### Assunzioni sul sistema
+
+- i nodi devono conscere la **loro posizione** &rarr; usando GPS, trilaterazione con anchor points
+- i nodi devono conoscere la **posizione dei vicini**
+- c'è un **location service** &rarr; un database distribuito che riceve query con identificatore di un nodo e restituisce come risposta le coordinate più recenti. 
+- i dati si muovono più velocemente dei nodi &rarr; la velocità di propagazione dei dati è pari alla velocità della luce, e quindi molto maggiore dei veicoli.
+
+[saltare slide 7, 8, 9]
+
+### Location service poco usati
+
+**Soluzione statica:**
+Fixed base station mantenuto aggiornato sulla posizione dei suoi nodi.
+
+**Flooding:**
+Flooding periodico di position query quando un nodo si sposta, anche se a nessuno interessa l'informazione.
+
+### Grid location service (GLS)
+
+Ogni nodo ha la sua posizione memorizzata in più location server distribuiti nel sistema. Questo aumenta la probabilità che ogni nodo abbia nelle vicinanze un location server che sappia indicare la posizione della destinazione ricercata. 
+
+**Assunzioni:** 
+
+- politica di inoltro geografico anche per i messaggi che scambia GLS (location query, location reply e location update)
+- ogni nodo conosce i vicini a 2 hop
+- i clock sono sincronizzati (utilizzando il GPS)
+- i nodi sono densi, le aree scoperte sono rare
+- i nodi conoscono una griglia sovrimposta all'area
+
+**Griglia:**
+Un quadrato di ordine 1 è un quadrato in cui tutti i veicoli che stanno lì dentro si trovano al massimo a distanza due hop.  I quadrati sono costruiti a partire dalle coordinate <0,0>.  La diagonale del quadrato è $\sqrt2 \cdot radio range$.
+Quattro quadrati di ordine 1 formano un quadrato di ordine 2. Alcuni quadrati non possono essere costruiti, in figura si vede un quadrato giallo che non ha nessun quadrato di ordine 2 adiacente. Quattro quadrati di ordine 2 formato un quadrato di ordine 3.
+
+![image-20200512114509248](image-20200512114509248.png)
+
+
+
