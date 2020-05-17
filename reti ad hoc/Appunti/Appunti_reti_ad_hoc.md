@@ -1400,5 +1400,56 @@ Quattro quadrati di ordine 1 formano un quadrato di ordine 2. Alcuni quadrati no
 
 ![image-20200512114509248](image-20200512114509248.png)
 
+**Semplificazioni:**
 
+- i nodi sono tutti spenti e si accendono nello stesso momento a tempo zero
+- i nodi in quadrati di ordine superiore al primo sono considerati fermi
+
+**Algoritmo:**
+
+1. Un nodo si sveglia e manda messaggi periodici di HELLO con il suo ID univoco e posizione. Il messaggio è ricevuto solo dai vicini one hop (nel suo raggio radio)
+2. Un nodo costruisce la lista dei suoi vicini tramite i messaggi di HELLO.
+   Se un nodo riceve un HELLO da un nodo che si trova in un 1-quadrato diverso dal proprio ignora il messaggio.
+3. I successivi messaggi di HELLO contengono anche ID e posizione dei nodi vicini. Ogni nodo in questo modo conosce i suoi vicini fino ad un massimo di 2 hop
+
+**Lemma 1 (efficienza):**
+Se c'è una query da S per D, con S e D nel medesimo 1-square, allora la query arriva a D in uno step. Uno step è il costo che serve per passare da un quadrato ad un altro, anche di ordine differente purchè la differenza sia al massimo di un ordine. 
+
+#### Distribuzione location server
+
+Per ogni k-square in cui il nodo *n* si trova, *n* piazza un location server in ogni (k-1)-square in cui *n* non è. Se *n* si trova in un quadrato di ordine 2 piazza i location server negli altri 3 quadrati di ordine 1. L'operazione viene ripetuta per i quadrati di ordine superiore. Il location server del nodo *n* in un k-square è il nodo con ID più vicino a *n* tra tutti quelli nel quadrato con ID > ID(*n*). Quando si raggiunge il massimo identificatore si riparte da 0 e si prende il più piccolo. Per esempio se ho *n* = 17, *n1* = 2, *n2* = 7, si deve prendere il più piccolo maggiore di 17, essendo *n1* e *n2* minori di 17 viene scelto 2. Per tutta la durata dell'algoritmo i nodi non conoscono gli altri nodi al di fuori del loro 1-square, e nemmeno quali sono i loro location server. Quando *n* manda un location update lo inoltra geograficamente nel k-quadrato in cui deve risiedere il location server di interesse. Il primo nodo che riceve il location update non sa se è idoneo, quindi incapsula l'update in una finta query e viene instrada come se stesse cercando il location service di *n* all'interno del k-quadrato in cui deve essere aggiornato il location server. Il nodo usa un criterio C per inoltrare una query da una sorgente S a una destinazione D. Quando il messaggio arriva al location service, esso aggiorna la posizione. Chi cerca la posizione con lo stesso criterio C, la  troverà esattamente su quel nodo che fa da location service.
+
+![image-20200516150017283](image-20200516150017283.png)
+
+#### Location query / reply
+
+Il nodo preso in considerazione è 17:
+
+1. Il nodo 76 inoltra la query per la posizione di 17 nel suo 1-square che ha l'identificatore più piccolo tra i più grandi rispetto al target.
+2. Il nodo che riceve la query (sempre 76 perchè c'è solo lui) controlla se è un location server di 17, non lo è, ma è location server di altri nodi. Tra questi nodi sceglie il più piccolo tra i più grandi di 17 cioè 21
+3. 21 controlla se è location server di 17, scegli il più piccolo tra i più grandi di 17 e reinoltra la query al nodo 20
+4. 20 è location server di 17, inoltra la query a 17
+
+![image-20200516150034159](image-20200516150034159.png)
+
+#### Inoltro location query pseudocodice
+
+```pseudocode
+Lookup(D): let S1 be the 1-square of S
+    if (D in S1) then EXIT; // found!
+    else {
+        i = 1;
+        select Ri = min{n in S1 | ID(D)<ID(n)};
+        send Location_Query(D) to Ri;
+    }
+
+receive(Location_Query(D)) {
+	if (Ri location server for D ∨ Ri=D) then EXIT; // found!
+	else {
+		i++;
+		select Ri = min{n | R(i-1) locserv ∧ ID(D)≤ID(n)};
+		send Location_Query(D) to Ri;
+	}
+}
+```
 
