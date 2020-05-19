@@ -59,9 +59,7 @@ C’è un assunzione fondamentale: i nodi sono mobili, ma poco mobili. I protoco
 
 ## WSNs – GoodFood
 
-Usata nei vigneti.
-
-WSN con sensori distribuiti ad alta densità sul territorio. I sensori realizzano una rete wireless. Non tutti i sensori sono uguali, ci sono micro-server che comunicano con una rete fissa.
+Usata nei vigneti. WSN con sensori distribuiti ad alta densità sul territorio. I sensori realizzano una rete wireless. Non tutti i sensori sono uguali, ci sono micro-server che comunicano con una rete fissa.
 
 **Funzionalità:**
 
@@ -163,15 +161,12 @@ Soluzione:
 ## Content centric networking (CCN) / Interest centric networking (ICN)
 
 In questo paradigma ciò che  interessa al client è raggiungere un server qualunque in cui ci sia il contenuto cercato, non uno specifico server.
-
 Il middleware aggiunge intelligenza alla rete, gestisce l’instradamento togliendo il carico al client di capire dove sono i dati.
-
 La sorgente fa broadcast per un nome di contenuto, cerca di raggiungere tutti i dispositivi di rete raggiungibili.
 
 **Esempio rete LAN multihost (con più router):**
 
 In una LAN il client invia in broadcast una query a tutti i router della rete. In HTTP la query contiene l’indirizzo del server e il nome del contenuto, nel CCN la query ha solo il nome di contenuto. Un problema è trovare uno schema di naming senza ambiguità che permette al middleware di trovare il contenuto richiesto. L’interest arriva a tutti i router che hanno un middleware, i quali cercano la copia del contenuto migliore (sul server più scarico/vicino). Le tabelle di instradamento memorizzano dove sono allocati i contenuti.
-
 Il nome del contenuto può essere impreciso, e indicare genericamente un tipo di contenuto (keyword), il router con la sua routing table, capisce dove potrebbero essere i contenuti richiesti. L’interest ritorna un solo contenuto, trovata la direzione l’interest è reinoltrato solo in quella direzione, anche se altre destinazioni hanno un interest con una parte in comune.
 
 **Architettura:**
@@ -1374,6 +1369,8 @@ Possono esserci delle zone in cui i veicoli sono molto pochi e distanti, questo 
 
 [saltare slide 7, 8, 9]
 
+## Location service
+
 ### Location service poco usati
 
 **Soluzione statica:**
@@ -1430,7 +1427,7 @@ Il nodo preso in considerazione è 17:
 3. 21 controlla se è location server di 17, scegli il più piccolo tra i più grandi di 17 e reinoltra la query al nodo 20
 4. 20 è location server di 17, inoltra la query a 17
 
-![image-20200516150034159](image-20200516150034159.png)
+<img src="image-20200516150034159.png" alt="image-20200516150034159" style="zoom:150%;" />
 
 #### Inoltro location query pseudocodice
 
@@ -1453,3 +1450,85 @@ receive(Location_Query(D)) {
 }
 ```
 
+#### Analisi efficienza ed efficacia
+
+I nodi sono un numero finito, gli identificatori sono univoci e confrontabili tra loro. 
+
+**Lemma 2:** Se un query da S per D, con S e D nello stesso k-square allora la query arriva a D in al più k step. 
+
+**DIMOSTRAZIONE:**
+
+*se k = 1:*
+Se sorgente e destinazione sono nello stesso quadrato di ordine uno allora la destinazione è subito trovata (lemma 1)
+
+*se k > 1:*
+
+R1 in S1 è t.c. nessun altro nodo *n* in S1 ha ID(D) < ID(*n*) < ID(R1)
+
+R1 è location server, nel 2-square che contiene il 1-square per tutti i nodi *m* che hanno  ID(D) $\leq$ ID(*m*) < ID(R1)
+
+Se R1 è location server di D &rarr; può instradare la location query direttamente a D, altrimenti:
+
+R1 sceglie il relay R2 tale che ID(D) $\leq$ ID(R2) < ID(R1), R2 si trova in un 2-square in cui c'è anche R1
+
+R2 è location server nel 3-square che contiene il 2-square, per tutti i nodi *m* che hanno ID(D) $\leq$ ID(m) < ID(R2)
+
+**Riassunto ad alto livello:**
+
+- ad ogni step decresce in modo monotono l'identificatore del relay che si sta usando
+- gli identificatori sono discreti e in numero finito
+- prima o poi la ricerca si deve fermare perchè si arriva a D
+- Ad ogni passo l'algoritmo sale almeno di un ordine di quadrato, la sorgente si trova sempre all'interno del k-quadrato. 
+- Quando scelgo un Rx nello x-square che contiene D, allora D deve aver scelto Rx come location server perchè non c'è altro nodo intermedio migliore
+- arrivo a Rx in al più x passi, ad un certo punto D e S si trovano nello stesso k quadrato
+
+#### Selezione location server
+
+- Il location update viene inoltrato geograficamente verso il baricentro del quadrato target
+- Il primo nodo R0 genera una fake query per D
+  - cera il nodo R1 migliore di sè nel suo 1-square o nel suo database
+  - se non lo trova &rarr; non esiste nodo n t.c ID(D) $\leq$ ID(*n*) < ID(R0) e quindi R0 è location server di D
+- altrimenti si itera avvicinandosi a ID(D)
+- L'inoltro si ferma quando
+  - Rx corrente non conosce nessuno migliore di lui &rarr; fa da location server per D
+  - Rx conosce qualcuno migliore ma al di fuori dello square target &rarr; fa il location server perchè gli square di ordine inferiore sono già stati scartati
+
+#### Struttura dati e messaggi
+
+**Location table:** ID dei nodi di cui *n* è location server e loro posizioni geografiche
+**Location cache:** ID e posizione dei nodi di cui *n* ha inoltrato gli update. Quando il nodo *n* dovrà inoltrare una query ad un nodo in cache, lo invia geograficamente nella posizione salvata in cache.
+
+| LOCATION UPDATE                 |
+| :------------------------------ |
+| source ID                       |
+| source location                 |
+| source timestamp                |
+| update destination square       |
+| update timeout                  |
+| next location server's ID       |
+| next location server's location |
+
+update timeout &rarr; La sorgente prevede l'invio di un nuovo update dopo un certo timeout, se il nodo non riceve nulla può scartare l'informazione perchè non è più location server per S.
+
+| LOCATION QUERY                            |
+| :---------------------------------------- |
+| source ID                                 |
+| source location                           |
+| ultimate target ID                        |
+| next location server's ID                 |
+| next location server's location           |
+| timestamp from previous server's database |
+
+#### Gestione mobilità
+
+Se un nodo si muove di 1-square non è neccessario un update. Fissata una distanza d, il nodo aggiorna i-square server quando si sposta di un valore maggiore di $2^{i-2} \cdot d$ 
+Se non ricevo risposta per due query successive (perchè i nodi sono mobili) il tempo di invio aumenta con binary exponential backoff. Questo ritardo serve per dare il tempo al nodo di aggiornare i suoi location server. Il ritardo cresce esponenzialmente come l'esponenzialità della distanza dei location server più lontani. 
+Problema local maximum: la destinazione è lontana e si sta allontanando. Per risolvere il problema quando una destinazione cambia il proprio 1-square lascia a tutti i nodi un forwarding pointer al nuovo 1-square. Quando i nodi scambiano i messaggi di HELLO, aggiungono l'informazione dello spostamento di D. 
+
+#### GLS vs DSR
+
+DSR è un algoritmo per MANET, la sorgente S genera un messaggio per D e aspetta le risposte, ricorda tutte le route reply che riceve e sceglie il cammino più corto da S a D. Se il cammino migliore si rompe passa al secondo migliore. 
+
+Confronto sulla probabilità di inoltro pacchetti con CBR (constant bit rate) tra gli algoritmi DSR e Grid:
+
+![image-20200519122539429](image-20200519122539429.png)
