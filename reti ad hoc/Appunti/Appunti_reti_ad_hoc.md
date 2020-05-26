@@ -1486,7 +1486,7 @@ R2 è location server nel 3-square che contiene il 2-square, per tutti i nodi *m
 
 - Il location update viene inoltrato geograficamente verso il baricentro del quadrato target
 - Il primo nodo R0 genera una fake query per D
-  - cera il nodo R1 migliore di sè nel suo 1-square o nel suo database
+  - c'era il nodo R1 migliore di sè nel suo 1-square o nel suo database
   - se non lo trova &rarr; non esiste nodo n t.c ID(D) $\leq$ ID(*n*) < ID(R0) e quindi R0 è location server di D
 - altrimenti si itera avvicinandosi a ID(D)
 - L'inoltro si ferma quando
@@ -1532,3 +1532,127 @@ DSR è un algoritmo per MANET, la sorgente S genera un messaggio per D e aspetta
 Confronto sulla probabilità di inoltro pacchetti con CBR (constant bit rate) tra gli algoritmi DSR e Grid:
 
 ![image-20200519122539429](image-20200519122539429.png)
+
+# Slide 9
+
+## Position based routing
+
+I vicini si conoscono con dei beacon ma i nodi non sanno com'è fatta la topologia della rete a distanza maggiore di uno hop. Per inoltrare i dati si utilizzano le coordinate della destinazione, che vengono utilizzate per scegliere il vicino appropriato in modo da ridurre la distanza dalla destinazione. L'approccio usato è di tipo reattivo, la rotta non viene costruita a priori perchè cambia rapidamente. È contrapposto all'approccio proattivo in cui si crea un percorso usato per l'inoltro.
+
+Ci sono numerose proposte in letteratura per realizzare position based routing:
+
+- flooding direzionale &rarr; un nodo fa flooding ad un sottoinsieme di vicini che si trovano più vicini alla destinazione. Il problema è che si generano più copie di un messaggio che possono creare collisioni sul canale. Per comunicazioni non unicast ma geocast (multicast su un area) allora il flooding è una soluzione corretta. 
+- unicast
+
+### Caratteristiche algoritmi per VANET
+
+- Loop freedom &rarr; I cammini che si formano ad ogni passo devono essere esenti dai loop.
+
+- Alta probabilità di consegna &rarr; se un nodo trova un vicino che ha maggior probabilità di lui di inviare il dato lo inoltra, altrimenti viene buttato via (store and forward)
+- Scalabilità &rarr; il costo dell'algoritmo cresce in misura non elevata al crescere delle dimensioni del sistema ad esempio log(*n_nodi*) oppure *n_nodi*
+- Robustezza
+- Distribuito &rarr; non c'è nessuna autorità centralizzata
+- Stateful / stateless
+- Path strategy &rarr; flooding, multipath o single path
+- metrica usata &rarr; ottimizzare l'energia utilizzata per trasmettere ed evitare collisioni o altro
+- requisiti fisici e requisiti di sistema addizionali (es. conoscenza delle mappe stradali)
+- location updates
+- QoS &rarr; vincola alcuni parametri, ad esempio si potrebbe richiedere una percentuale di consegna dei pacchetti pari al 95% o richiedere pacchetti entro un tempo massimo
+- costruire una topologia &rarr; tutti gli algoritmi sulle VANET descritti nel corso non costruiscono una topologia, ma ci sono alcuni esempi in letteratura.
+
+### Politiche GREEDY: progress
+
+![image-20200524171830080](image-20200524171830080.png)
+
+In figura la sorgente S deve mandare dei dati alla destinazione D, il discorso è valido anche per un relay intermedio che sta inoltrando i dati. Il cerchio rappresenta il raggio di comunicazione di S al cui interno c'è il nodo A. Per misurare il progresso si collegano con un segmento S e D e si traccia un segmento perpendicolare a $\overline{SD}$ da A trovando un punto A'. Il segmento $\overline{SA'}$ è il progresso di A. Questo progresso è positivo perchè A' è più vicino a D. L'idea degli algoritmi basati su progress scelgono uno dei vicini con progresso positivo.
+
+### Politiche GREEDY: Neighbor selection
+
+**RPM - Random Progress Method:**
+Un vicino random tra quelli con progresso positivo. I vantaggi sono testare cammini diversi per ogni pacchetto ed avere una banda aggregata più alta perchè i pacchetti sono divisi su cammini diversi.
+
+**MFR - Most Forward within Radius:**
+Il vicino con il progresso positivo maggiore. Il vantaggio è un dato che fa pochi hop lunghi per raggiungere la destinazione. 
+
+**NFP - Nearest with Forward Progress:**
+Il vicino con la distanza in linea d'aria minore dal nodo corrente. Il vantaggio è usare una potenza di trasmissione minore per risparmiare batteria ed evitare collisioni.
+
+**GS - Greedy Scheme:**
+Non considera il concetto di progresso. Sceglie il vicino con la distanza minima dalla destinazione.
+
+**DIR -  Compass Routing:**
+Non considera il concetto di progresso. Sceglie il vicino B di un nodo A in modo tale che la direzione A-B sia la più vicina ad A-D
+![image-20200524175004520](image-20200524175004520.png)
+
+#### Problema approcci greedy
+
+La consegna può fallire per un problema di massimo locale
+
+![image-20200524175344376](image-20200524175344376.png)
+
+#### Recovery strategy
+
+**Flooding MFR:**
+Quando un nodo non può inoltrare un pacchetto fa flooding a tutti i suoi vicini che useranno la strategia attualmente implementata nella rete per compiere l'inoltro. Se un  vicino nota di essere un massimo locale fa di nuovo flooding.
+
+**Alternate MFR:**
+Il nodo in massimo locale con una strategia libera per l'implementatore individua i *k* vicini buoni come backup.
+
+**Disjoint MFR:**
+Il nodo in massimo locale inoltra al migliore dei suoi vicini escludendo quello da cui ha ricevuto il pacchetto.
+
+### Greedy Perimeter Stateless Routing (GPSR)
+
+Si può dimostrare che se c'è un cammino per la destinazione allora GPSR lo trova, in caso contrario c'è una partizione di rete che rende impossibile raggiungere la destinazione. 
+
+Assunzioni:
+
+- usare una delle politiche greedy viste prima
+- i link sono bidirezionali
+- ci sono dei location server
+- i veicoli mandano periodicamente dei beacon con ID e posizione che vengono memorizzati dai vicini in una tabella mantenuta soft-state
+- ogni pacchetto contiene l'ultima posizione corrente del sender per facilitare la risposta della destinazione. Le NIC (network interface card) sono configurate in modalità promisqua quindi i nodi ascoltano anche i messaggi degli altri. Questo porta ad un consumo di batteria maggiore, ma non è un problema nelle VANETs.
+
+#### Problema del massimo locale
+
+![image-20200526120311585](image-20200526120311585.png)
+
+In figura si vede che S non può raggiungere D direttamente perchè non ci sono nodi in mezzo. S è un massimo locale, ma ha un cammino verso sinistra per D. Questo nodo però ha un progresso negativo ed ha un angolo diverso da quello per $\overline{SD}$.
+L'obbiettivo è trovare una sequenza di nodi che fanno il giro intorno all'area vuota per arrivare a D senza mai tornare sui propri passi ed usando solo la conoscenza locale dei nodi.
+
+## Teoria dei grafi
+
+**face:** regione poligonale chiusa tra archi
+**right-hand rule:** se ci si muove in un grafo scegliendo sempre come arco successivo quello preso in senso antiorario, allora la faccia del poligono viene attraversata in senso orario. 
+
+![image-20200526150215119](image-20200526150215119.png)
+
+#### Grafo planare
+
+Un grafo è planare se per ogni coppia di archi non si incrocia se non nei vertici. Sui grafi planari è possibile applicare la regola della mano destra.
+
+![grafo non planare](image-20200526150845384.png)
+
+​												grafo non planare
+
+![image-20200526151112680](image-20200526151112680.png)
+
+​												 grafo planare
+
+#### Relative neighborhood graph
+
+Algoritmo che planarizza un grafo garantendo che non venga disconnesso. In figura ci sono i nodi *u*, *v* e *w*. Nel processo di planarizzazione mantengo un arco tra *u* e *v*, solo se non c'è un altro nodo *w* nella lunetta grigia. Altrimenti elimino l'arco tra *u* e *v* perchè sono raggiungibili passando per *w*.
+
+![image-20200526151959805](image-20200526151959805.png)
+
+#### Gabriel graph
+
+Si elimina l'arco tra *u* e *v* se esiste un nodo *w* nel cerchio grigio che ha come centro  il punto di mezzo tra *u* e *v* e che ha raggio pari alla metà della distanza tra *u* e *v*.
+
+<img src="image-20200526152156346.png" alt="image-20200526152156346" style="zoom:80%;" />
+
+#### Esempi planarizzazione
+
+![image-20200526152657137](image-20200526152657137.png)
+
+![image-20200526152706837](image-20200526152706837.png)
