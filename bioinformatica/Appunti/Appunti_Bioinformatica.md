@@ -619,3 +619,105 @@ Le rete neurale usata ha:
 - numero massimo di epoche 100
 
 Il numero di active enancher è molto inferiore a quello degli inactive enancher e ci sono molti campioni unknown. Il problema è che la LM tende a imparare molto meglio la classe maggioritaria rispetto a quella minoritaria. Nel paper il 70% dei dati sono usati per il training set ma le classi maggioritarie sono state limitate a 3000 esempi. Poi è stato ribilanciato il test set per mantenere le stesse proporzioni del training set.
+
+# Predizione malattie genetiche
+
+Le malattie genetiche sono ereditarie o determinate da fattori esterni ambientali come radiazioni o sostanze chimiche.
+
+È cruciale quindi:
+
+1. definire varianti genetiche
+2. predire il loro potenziale patogenico
+3. scoprire le terapie adatte
+
+Si possono predire le varianti patogeniche come un problema di machine learning
+
+Dati:
+
+- un insieme di varianti genetiche (gli esempi)
+- un insieme di annotazioni per ogni variante (feature)
+- un insieme di etichette per esempio patogenico/neutro per ogni variante
+
+Si vuole predirre se una variante genetica è patogenica. È un problema di ranking o di classificazione. Un problema di ranking può essere trasformato in un problema di classificazione mettendo una soglia (es. > 0.5 &rarr; patogenico).
+
+La medicina genomica, di precisione e personalizzata si basa sulle caratteristiche genetiche specifice di una persone, andando a individuare quali sono le cause specifiche di una patologia. Questa medicina è possibile solo con biotecnologie che permettono di misurare il genoma.
+
+Oggi è possibile alterare il DNA in specifiche posizioni, sostituendo la vecchia sequenza con una nuova.
+
+**Promoters:**
+Attivati da RNAPII (RNA polimerasi seconda), all'RNA si legano altri fattori per fare iniziare una trascrizione.
+
+**Enanchers:**
+Sezioni corte di DNA a cui si legano delle proteine chiamate attivatori e hanno il ruolo di attivare ulteriormente la trascrizione. Gli enancher spesso sono lontani dai promoters ma dato che il DNA ha una struttura tridimensionale si formano dei loop che mettono in relazione diretta enancher e promoter.
+
+**Silencer:**
+Hanno la funzione opposta agli enancher, sono sequenze di DNA a cui si legano delle proteine per inibire la trascrizione. 
+
+**Insulator:**
+Regioni di DNA che impediscono l'interazione tra diversi domini della cromatica. Per esempio possono bloccare le interazioni tra enancher e promoter.
+
+<img src="image-20200520112513599.png" alt="image-20200520112513599"  />
+
+## GWAVA
+
+Genome-wide annotation of variant. Progetto il cui scopo è identificare le varianti genetiche potenzialmente patogeniche. 
+
+**Caratteristiche principali:**
+
+- Dato un insieme di varianti presente nei geni ordina le varianti da quelle più patogeniche a quelle meno patogeniche
+- I dati sono prendi da ENCODE e GENCODE. L'algoritmo utilizzato è basato sulle random forest ma modificato per gestire classi sbilanciate
+- Gli esempi positivi sono presi da HGMD, quelle negative da 1000 Genomes
+- Discrimina le varianti patogeniche usando le loro annotazioni
+
+### Decision tree
+
+![image-20200522111145323](image-20200522111145323.png)
+
+Sui nodi foglia ci sono solo esempi appartenenti ad una sola classe.
+$$
+Information(x) = log_2(\frac{1}{P(R=x)})
+$$
+Quando la probabilità è 0 *information(x)* tende a $+\infty$, se la probabilità è 1 i*nformation(x)* è 1. In generale l'entropia di una variabile random è la stessa del valore previsto con il valore rimpito con l'informazione.
+
+[formula pagina 8]  
+
+ml = esempi nel nodo di sinistra
+
+mr = esempi nel nodo di destra
+
+Si vuole suddividere gli esempi in modo da massimizzare delta(H)
+
+#### Algoritmo 
+
+[scrivere algoritmo, immagine pagina 11]
+
+suddivide gli esempi cercando quella che massimizza l'information gain, cioè che suddive meglio le classi. Il valore di soglia iniziale viene provato empiricamente trovando la soglia migliore. 
+
+### Random forest
+
+Le random forest utilizzano un insieme di LM che apprendono lo stesso problema con modalità diverse e fanno una predizione indipendente. A questo punto le predizioni vengono combinate e per maggioranza si sceglie la predizione migliore.
+
+![image-20200522110156654](image-20200522110156654.png)
+
+Nel caso di probabilità ogni albero di decisione esprime una probabilità e con variabili aleatorie si trova la probabilità totale. 
+
+**Randomization:**
+
+- bootstrap samples &rarr; ad ogni albero di decisione viene data una copia bootstrap del dataset che è ottenuta scegliendo random i campioni con rimpiazzo (cioè è possibile che esca due volte lo stesso campione)
+- random selection of $K \leq p$ feature &rarr; ogni albero utilizza solo un sottoinsieme di dimensione *K* delle feature
+- random selection of threshold
+
+#### Algoritmo
+
+RF = contiene gli alberi costruiti, all'inizio è vuoto
+
+ciclo per costruire gli alberi:
+
+- bootstrap
+- si fa previsione arrivando fino alle foglie (non si ferma l'algoritmo dopo una certa profondità)
+- aggrego l'albero alla random forest
+
+#### Pro e contro
+
+- Training veloce, complessità $O(MKNlog^2N)$
+- ...
