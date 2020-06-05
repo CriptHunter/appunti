@@ -630,7 +630,7 @@ Le malattie genetiche sono ereditarie o determinate da fattori esterni ambiental
 2. predire il loro potenziale patogenico
 3. scoprire le terapie adatte
 
-Si possono predire le varianti patogeniche come un problema di machine learning
+Si possono predire le varianti patogeniche come un problema di machine learning.
 
 Dati:
 
@@ -640,9 +640,7 @@ Dati:
 
 Si vuole predirre se una variante genetica è patogenica. È un problema di ranking o di classificazione. Un problema di ranking può essere trasformato in un problema di classificazione mettendo una soglia (es. > 0.5 &rarr; patogenico).
 
-La medicina genomica, di precisione e personalizzata si basa sulle caratteristiche genetiche specifice di una persone, andando a individuare quali sono le cause specifiche di una patologia. Questa medicina è possibile solo con biotecnologie che permettono di misurare il genoma.
-
-Oggi è possibile alterare il DNA in specifiche posizioni, sostituendo la vecchia sequenza con una nuova.
+La medicina genomica, di precisione e personalizzata si basa sulle caratteristiche genetiche specifice di una persone, andando a individuare quali sono le cause specifiche di una patologia. Questa medicina è possibile solo con biotecnologie che permettono di misurare il genoma. Oggi è possibile alterare il DNA in specifiche posizioni, sostituendo la vecchia sequenza con una nuova.
 
 **Promoters:**
 Attivati da RNAPII (RNA polimerasi seconda), all'RNA si legano altri fattori per fare iniziare una trascrizione.
@@ -654,7 +652,7 @@ Sezioni corte di DNA a cui si legano delle proteine chiamate attivatori e hanno 
 Hanno la funzione opposta agli enancher, sono sequenze di DNA a cui si legano delle proteine per inibire la trascrizione. 
 
 **Insulator:**
-Regioni di DNA che impediscono l'interazione tra diversi domini della cromatica. Per esempio possono bloccare le interazioni tra enancher e promoter.
+Regioni di DNA che impediscono l'interazione tra diversi domini della cromatina. Per esempio possono bloccare le interazioni tra enancher e promoter.
 
 <img src="image-20200520112513599.png" alt="image-20200520112513599"  />
 
@@ -665,7 +663,7 @@ Genome-wide annotation of variant. Progetto il cui scopo è identificare le vari
 **Caratteristiche principali:**
 
 - Dato un insieme di varianti presente nei geni ordina le varianti da quelle più patogeniche a quelle meno patogeniche
-- I dati sono prendi da ENCODE e GENCODE. L'algoritmo utilizzato è basato sulle random forest ma modificato per gestire classi sbilanciate
+- I dati sono presi da ENCODE e GENCODE. L'algoritmo utilizzato è basato sulle random forest ma modificato per gestire classi sbilanciate
 - Gli esempi positivi sono presi da HGMD, quelle negative da 1000 Genomes
 - Discrimina le varianti patogeniche usando le loro annotazioni
 
@@ -721,3 +719,36 @@ ciclo per costruire gli alberi:
 
 - Training veloce, complessità $O(MKNlog^2N)$
 - ...
+
+### Cause delle variazioni genetiche
+
+**Mutazioni:** cambiamenti nel DNA, possono essere variazioni di un singolo nucleotide o di una parte di cromosoma.
+
+**Locus:** posizione specifica in un cromosoma, può essere una singola base o più lungo
+
+**Alleli:** insieme di varianti in un locus
+
+**Genotipo:** sequenza di alleli lungo il loci di un individuo
+
+**Esempio:**
+
+![image-20200527104004122](image-20200527104004122.png)
+
+Individuo1: (1, CT), (2, GG)
+
+Individuo2: (1, TT), (2, GA)
+
+L'allele più frequente viene chiamato allele di riferimento, l'altro l'allele alternativo.
+
+**Fenotipo:** function(Genotipo, ambiente)
+
+**Prima legge di Mendel (segregazione):**
+![image-20200527104834716](image-20200527104834716.png)
+
+Nella prima generazione madre e padre sono omozigoti. Dalla generazione 1 si formano individui ibridi e c'è il 50% di probabilità di avere *A* o *a*.
+
+**Seconda legge di Mendel:**
+Nel crossover due loci sul medesimo braccio del cromosoma possono subire un fenomeno di ricombinazione.
+
+![image-20200527105217692](image-20200527105217692.png)
+
