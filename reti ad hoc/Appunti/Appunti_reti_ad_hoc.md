@@ -1633,11 +1633,11 @@ Un grafo è planare se per ogni coppia di archi non si incrocia se non nei verti
 
 ![grafo non planare](image-20200526150845384.png)
 
-​												grafo non planare
+​												     grafo non planare
 
 ![image-20200526151112680](image-20200526151112680.png)
 
-​												 grafo planare
+​												     grafo planare
 
 #### Relative neighborhood graph
 
@@ -1647,12 +1647,296 @@ Algoritmo che planarizza un grafo garantendo che non venga disconnesso. In figur
 
 #### Gabriel graph
 
-Si elimina l'arco tra *u* e *v* se esiste un nodo *w* nel cerchio grigio che ha come centro  il punto di mezzo tra *u* e *v* e che ha raggio pari alla metà della distanza tra *u* e *v*.
+Si elimina l'arco tra *u* e *v* se esiste un nodo *w* nel cerchio grigio che ha come centro  il punto medio tra *u* e *v* e che ha raggio pari alla metà della distanza tra *u* e *v*.
 
 <img src="image-20200526152156346.png" alt="image-20200526152156346" style="zoom:80%;" />
 
-#### Esempi planarizzazione
+#### Esempio planarizzazione
 
 ![image-20200526152657137](image-20200526152657137.png)
 
 ![image-20200526152706837](image-20200526152706837.png)
+
+### GPSR
+
+L'algoritmo utilizza una strategia greedy quando possibile, sui massimi locali passa in perimeter mode. *x* è un massimo locale, e riceve un pacchetto da inoltrare verso D. Marca il pacchetto come pacchetto entrato in perimeter mode. Si cerca di percorrere il perimetro della zona vuota usando la regola della mano destra. *x* planarizza il suo intorno, nel pacchetto indica anche le sue coordinate. La posizione è importante perchè la parete da costeggiare è il segmento che congiunge *x* con D. *x* controlla la congiungente con la destinazione, e sceglie il primo arco in senso antiorario che lo congiunge ad un vicino e che si trova dall'altra parte della congiungente. I nodi successivi fanno la stessa operazione. Se non c'è un arco dall'altra parte della congiungente $\overline{xD}$ allora il nodo proietta la propria immagine sulla congiungente $\overline{xD}$ e poi in senso antiorario sceglie il primo arco. Quando il massimo locale è superato GPSR torna ad usare un approccio greedy. Si pò dimostrare che la regola della mano destra in un grafo planare trova un percorso per la destinazione, se questo esiste.
+
+![image-20200526190629465](image-20200526190629465.png)
+
+#### Esempio GPSR
+
+Slide 9, pagine 18 - 55
+
+FINIRE LA PARTE SU CONFRONTO GLS E GPSR
+
+
+
+# Slide 10
+
+## Internet of Things
+
+IoT è una rete globale di oggetti interconnessi univocamente indirizzabili, basata su protocolli di comunicazione standard. L'obbiettivo di IoT è connettere la rete internet tradizionale a oggetti che utilizzano protocolli diversi come quelli visti in questo corso. La rete è globale perché da qualunque parte del mondo dovrei poter accedere ad un oggetto nella IoT, può includere dispositivi sottomarini o satelliti in cielo. Per l'indirizzamento univoco si usa come riferimento IPv6, infatti IPv4 non ha abbastanza indirizzi per tutti i dispositivi IoT.
+
+### Applicazioni
+
+<img src="image-20200531111527476.png" alt="image-20200531111527476" style="zoom:150%;" />
+
+
+
+### Ricerca
+
+<img src="image-20200531112755544.png" alt="image-20200531112755544" style="zoom:150%;" />
+
+### LLNs
+
+Le Low-Power Lossy Networks sono reti a bassa potenza soggette a fallimento e partizioni. I nodi sono immersi negli oggetti di tutti i giorni (es. interrutore luce). Si parla quindi di cyber-physical system perchè sono contemporaneamente oggetti fisici e virtuali. Questi dispositivi hanno batteria e potenza limitate. 
+
+**Full function devices:** hanno IPv6 e protocolli a contorno come il protocollo del rilevamento dei vicini. 
+
+**Reduced function devices:** hanno solo i protocolli della rete di cui fanno parte e non possono essere connessi direttamente a Internet.
+
+L'obbiettivo della standardizzazione è avere compatibilità e integrazione nonostante l'eterogeneità.
+
+### IoT smart object
+
+- ha un insieme minimo di funzioni di comunicazione
+- possiede un identificatore unico e un nome
+  - descrizione human-radable che ne indica le funzioni
+  - publish/subscribe non cerca un device ID ma un servizio
+- ha capacità limitate di computazione
+- può avere la capacità di misurazione di fenomeni fisici
+
+### Differenze rispetto a WSN/VANETs
+
+**Eterogeneità:**
+Gli oggetti nella IoT non utilizzano tutti lo stesso protocollo di comunicazione.
+
+**Ricerca e composizione:**
+Nodi con funzionalità semplici devono interfacciarsi usando tecnologie differenti per offrire dei servizi.
+
+**Machine-to-machine:**
+comunicazione e integrazione con Internet
+
+### Principali problemi IoT
+
+**Scalabilità:**
+Ci saranno miliardi di dispositivi, serve scalabilità sulla comunicazione, elaborazione e coordinamento
+
+**Identificazione univoca:**
+Il passaggio a IPv6 è obbligatorio, potrebbe essere necessaria una traduzione quando una parte della rete utilizza una tecnologia diversa.
+
+**trust, privacy, sicurezza:**
+Gli oggetti che portiamo con noi possono rivelare i nostri dati
+
+### Tecnologie e approcci
+
+Si userà un approccio SOA (service oriented architecture): astrae caratteristiche dai device a servizi forniti.
+
+- object abstraction: interfacia tra comandi specifici di apparato, e linguaggio di rete
+- service management: espone l'elenco dei servizi forniti dall'oggetto
+- service composition: compone diversi oggetti per ottenere un servizio che non è fornito da nessuno ma che è l'unione di più parti.
+
+### Web of Thing
+
+![image-20200605100306393](image-20200605100306393.png)
+
+Standard a livello applicazione per fornire un interfaccia alle LLNs. [saltare da 13 a 16]
+
+### Requisiti industry 4.0
+
+- Tutto è connesso tramite IoT o IoP
+
+- autonoma &rarr; i sistemi cyber fisici operano autonomamente senza umani
+- reti deterministiche e a bassa latenza (< 5ms)
+- alta affidabilità (consegna pacchetti $>=$ 99%)
+- ambiente difficile &rarr; umidità, caldo, polvere, interferenze
+
+- in comune con IoT:
+  - resistente ai fallimenti
+  - basso consumo energetico
+  - eterogeneità
+  - scalabilità
+  - standard universali
+
+### Industrial wireless network
+
+![image-20200531151915190](image-20200531151915190.png)
+
+# Slide 11
+
+## Concetti di base
+
+### CSMA/CA
+
+Carrier Sense Multiple Access with Collision Avoidance, diverso da ethernet che propone collision detection. Per fare collision detection infatti è necessario trasmettere e contemporaneamente ascoltare se avviene una collisione. 
+
+In CSMA/CA un oggetto per trasmettere cerca di capire se il canale è libero, se è libero aspetta ancora un piccolo intervallo per desincronizzarsi. Il backoff usa il binary exponential backoff, se si rileva una collisione si aspetta un tempo casuale tra [0, 1], se succede ancora tra [0, 2], [0, 4], [0, 8] ...
+
+La procedura di channel busy serve per evitare starvation, alla scadenza del timer il nodo potrebbe riuscire a trasmettere.
+
+
+
+```pseudocode
+sense channel; // CCA
+if (free) then
+	wait for DIFS;
+	sense again channel;
+	if (free) then
+		send frame;
+	else backoff();
+else backoff();
+
+backoff() {
+	set timer ß BEB();
+	sense channel;
+	wait for an event...
+	if (channel busy) then
+		pause timer;
+		wait free channel;
+		wait for DIFS;
+		resume timer;
+	if (timeout) then
+		sense channel;
+	if (channel free)
+		send frame;
+	else backoff();
+}
+
+// CCA = clear channel assessment
+// BEB = binary exponential backoff
+// DIFS = distributed inter-frame space
+```
+
+### Slotted Aloha
+
+I nodi sono sincronizzati, il tempo procede in slot, ogni slot ha tempo sufficiente per trasmettere un frame MAC di dimensione massima. Una stazione trasmette all'inizio dello slot oppure trasmette al successivo.
+
+### Reti deterministiche
+
+Realizzare reti deterministiche con throughput garantito, bassa latenza e alta affidabilità. Con approcci non deterministici come slotted Alhoa o CSM/CA non è possibile fare reti deterministiche.
+
+**TDM:**
+Ogni stazione sulla rete ha un quanto di tempo a sua esclusiva disposizione per trasmettere dei frame. Di solito sono distribuiti in round robin, gli slot non utilizzati sprecano tempo nella rete. Ma TDM è stato ripreso e modificato definendo *k* slot che riservati a chi vuole trasmettere, quindi le stazioni che hanno bisogno di trasmettere molti dati hanno più slot riservati.
+
+**FDM:**
+La frequenza è divisa in sottointervalli, ogni intervallo è associato ad una stazione, si evitano le collisioni. Anche in questo caso esiste una variante in cui le stazioni non hanno frequenze riservate ma le stazioni fanno hopping da un intervallo all'altro usando una schema per cui non ci saranno mai due stazioni che trasmettono sullo stesso canale.
+
+## 6TISCH
+
+Per dispositivi wireless con poche risorse e energia.
+
+![image-20200605101059962](image-20200605101059962.png)
+
+- livello fisico: 802.15.4, standard per wireless personal area network
+- data link: IEEE 802.15.4e che include TSCH
+- data link: LCC
+- middleware: 6LoWPAN HC, per fare header compression per i livelli più bassi che non possono gestire IPv6
+- 6LoWPAN ND: per scoprire i vicini
+- RPL (ripple): per connettere reti diverse (es. GPSR e direct diffusion)
+- CoAP: per il web of things
+
+Diversi sistemi operativi per reti di sensori inglobano molti di questi protocolli
+
+### IEEE 802.15 working group
+
+Wireless Specialty Networks:
+
+- 802.15.4 &rarr; standard a livello fisico e mac per WSN
+- 802.15.3 &rarr; tecnologie a corto raggio  WPAN usate anche da 5G per la multimedia
+- 802.15.5 &rarr; mesh networking, l'infrastruttura di rete è a maglia fissa
+- 802.15.6 &rarr; body area networks, dispositivi che si trovano sulla/nella persona (misura glicemia, ossigenazione ecc...)
+
+### Network structure
+
+![image-20200602150236785](image-20200602150236785.png)
+
+A internet IPv6 sono collegati dispositivi su reti low power lossy network (LLN) che utilizzano 6TiSCH. Dei router di confine chiamati 6LBR (LLN Border Router) mediano la comunicazione tra la rete tradizionale e le reti LLN. Essendo reti differenti i router devono anche modificare i dati, è facile da LLN a Internet, più complicato da Internet a LLN perchè i pacchetti IPv6 sono troppo grandi. I 6LBR forniscono anche il tempo di rete per la sincronizzazione.
+
+### Time Slotted Channel Hopping
+
+Si divide il tempo di rete in intervalli abbastanza lunghi da consentire ad una stazione di mandare un frame, e una stazione può mandare il frame sono all'inizio dello slot. La granularità è di millisecondi o microsecondi, i nodi devono essere sincronizzati per sapere quando inizia uno slot. Il canale copre un determinato range di frequenze, una stazione non utilizza interamente il range che è diviso con FDM. Una stazione quando invia ha uno schema di hop da un sottocanale all'altro e non trasmette due volte sullo stesso. Si realizza una matrice che ha sulle ordinate i 16 sottocanali, sulle ascisse ci sono gli slot. Gli slot rossi sono liberi per chi vuole comunicare, gli slot azzurri sono destinati ad una coppia di nodi, gli slot bianchi sono slot in cui non si trasmette o si riceve. I nodi sono attivi sono quando trasmettono e ricevono, si arriva fino ad un anno di batteria.
+
+![image-20200602150303803](image-20200602150303803.png)
+
+### TSCH: channel structure
+
+- CDU matrix &rarr; channel distribution and usage matrix
+- 1 timeslot &rarr; trasmissione frame + trasmissione ack, è uno dei rettangoli azzurri
+- slotframe &rarr; dopo quanti timeslot si riparte dall'inizio, non c'è uno standard
+- i nodi sui frame di dati e sugli ack inviano anche l'informazione sul clock per avere una sincronizzazione maggiore rispetto a quella fornita solo dai 6LBR
+- scheduled cell &rarr; timeslot riservato per una coppia [A, B] in cui A trasmette e B riceve
+- shared cell: slot non riservato con contesa
+- bundle: insieme di tutte le celle schedulate per $A \Larr\Rarr B$ (full duplex). Il bundle definisce la bandwidth per una coppia di nodi
+
+### Timeslot with acknowledged trasmission
+
+- Il trasmettitore aspetta un offset per tolleranza con le trasmissioni precedenti
+- con CCA controlla se il canale è libero
+- trasmette il frame
+- il ricevente commuta la scheda di rete su ricezione
+- il ricevente ascolta nell'intervallo R1 e R2, in questo intervallo deve iniziare a ricevere il pacchetto, se non riceve niente allora il trasmettitore non deve inviare niente
+- Il trasmettitore commuta su riccezione e aspetta un tempo T3 - T4 per ricevere l'ACK
+- il ricevente commuta su trasmissione e invia l'ACK
+
+![image-20200602153111177](image-20200602153111177.png)
+
+### Problemi timeslot assignment
+
+Due nodi vicini non possono trasmettere sullo stesso sottocanale ma c'è il problema della hidden station. Due nodi con un vicino comune non possono comunicare nello stesso timeslot nello stesso canale. È un problema di colorazione del grafo, in cui vanno minimizzati il numero dei colori per massimizzare il riuso della matrice
+
+![image-20200602153518521](image-20200602153518521.png)
+
+### TSCH: scheduled timeslot processing
+
+<img src="image-20200602160109653.png" alt="image-20200602160109653" style="zoom:150%;" />
+
+### TSCH: management of shared cells
+
+<img src="image-20200602160516622.png" alt="image-20200602160516622" style="zoom:150%;" />
+
+### Synchorinization and channel hopping
+
+L'ingresso di un nodo nella rete è gestito dai 6LBR che gli forniscono la matrice e l'ASN (absolute slot number), un valore di 40 bit inizializzato a 0 quando la rete è stata creata e incrementato ad ogni timeslot. 
+$$
+ASN = k \cdot S + t
+$$
+
+- k = numero di ripetizioni dello slotframe da quando la rete è stata creata
+
+- S = periodo slotframe
+
+- t = slot offset
+
+$$
+trasmissionFrequency = f((ASN + channelOffset) \; mod \; nFreq)
+$$
+
+- channel offset = numero di sottocanali per slotframe
+
+- nFreq = numero delle frequenze disponibili
+
+- funzione *f* = traduce in elementi di una lookup table di frequenze
+
+- ad ogni iterazione ASN cambia e così anche le frequenze
+
+### Esempi di costruzione slotframe
+
+**Un timeslot per ogni nodo:**
+Scala come *O(n)*, i nodi sono dormienti per il resto del tempo, c'è alta lantenza e alto risparmio energetico.
+
+**Un timeslot per ogni colore:**
+Un nodo che ha vicini di colore diverso deve prendersi tutti gli slot per trasmettere e ricevere e quindi è sempre sveglio. La latenza è minimizzata, la banda è massima ma nel caso peggiore il nodo è sempre sveglio.
+
+**In ogni slot frame il nodo ha la possibilità di parlare con tutti i suoi vicini:**
+Tradeoff tra i due casi precedenti, minore latenza del primo caso e maggiore risparmio energetico del secondo.
+
+### Funzionalità 6top
+
+- Formazione rete &rarr; procedura di join, fornitore del segnale orario, autenticazione e distribuzione di chiavi
+- computazione path &rarr; come alternativa a RPL
+- scheduling computation
+- queue management
+- performance monitoring
+
+
+
