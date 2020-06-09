@@ -1,3 +1,7 @@
+---
+Appunti reti ad hoc
+---
+
 # Introduzione corso
 
 ## Prerequisiti
@@ -141,12 +145,11 @@ Interazione di “smart things” tra loro e con utenti.
 ## Comunicazione sincrona
 
 Normalmente la comunicazione è sincrona, il client può assumere che il server sia presente durante la comunicazione. C’è un rendezvous: cioè un appuntamento. Il server esegue il suo compito assumendo che il client rimanga presente in comunicazione fino alla risposta del server.
-
 Randezvous stretto: dopo avere inviato i dati, il client rimane bloccato in attesa della risposta.
 
 ## Comunicazione asincrona
 
-In reti challenged la propagazione del messaggio può richiedere tempo, perché non c’è sempre un cammino tra sorgente e destinazione. I nodi intermedi memorizzano il messaggio fino a quando non si presenta la possibilità di inoltrare il messaggio. Quindi è impossibile instaurare una comunicazione sincrona. La sorgente non fa affidamento sul fatto che la destinazione sia raggiungibile, e non aspetta la risposta perché potrebbe richiedere molto tempo.
+In reti challenged la propagazione del messaggio può richiedere tempo, perché non c’è sempre un cammino tra sorgente e destinazione. I nodi intermedi memorizzano il messaggio fino a quando non si presenta la possibilità di inoltrarlo. Quindi è impossibile instaurare una comunicazione sincrona. La sorgente non fa affidamento sul fatto che la destinazione sia raggiungibile, e non aspetta la risposta perché potrebbe richiedere molto tempo.
 
 La rete ha:
 
@@ -160,13 +163,11 @@ Soluzione:
 
 ## Content centric networking (CCN) / Interest centric networking (ICN)
 
-In questo paradigma ciò che  interessa al client è raggiungere un server qualunque in cui ci sia il contenuto cercato, non uno specifico server.
-Il middleware aggiunge intelligenza alla rete, gestisce l’instradamento togliendo il carico al client di capire dove sono i dati.
+In questo paradigma ciò che  interessa al client è raggiungere un server qualunque in cui ci sia il contenuto cercato, non uno specifico server. Il middleware aggiunge intelligenza alla rete, gestisce l’instradamento togliendo il carico al client di capire dove sono i dati.
 La sorgente fa broadcast per un nome di contenuto, cerca di raggiungere tutti i dispositivi di rete raggiungibili.
 
 **Esempio rete LAN multihost (con più router):**
-
-In una LAN il client invia in broadcast una query a tutti i router della rete. In HTTP la query contiene l’indirizzo del server e il nome del contenuto, nel CCN la query ha solo il nome di contenuto. Un problema è trovare uno schema di naming senza ambiguità che permette al middleware di trovare il contenuto richiesto. L’interest arriva a tutti i router che hanno un middleware, i quali cercano la copia del contenuto migliore (sul server più scarico/vicino). Le tabelle di instradamento memorizzano dove sono allocati i contenuti.
+In una LAN il client invia in broadcast una query a tutti i router della rete. In HTTP la query contiene l’indirizzo del server e il nome del contenuto, nella CCN la query ha solo il nome di contenuto. Il problema è trovare uno schema di naming senza ambiguità che permette al middleware di trovare il contenuto richiesto. L’interest arriva a tutti i router che hanno un middleware, i quali cercano la copia del contenuto migliore (sul server più scarico/vicino). Le tabelle di instradamento memorizzano dove sono allocati i contenuti.
 Il nome del contenuto può essere impreciso, e indicare genericamente un tipo di contenuto (keyword), il router con la sua routing table, capisce dove potrebbero essere i contenuti richiesti. L’interest ritorna un solo contenuto, trovata la direzione l’interest è reinoltrato solo in quella direzione, anche se altre destinazioni hanno un interest con una parte in comune.
 
 **Architettura:**
@@ -177,29 +178,26 @@ Il nome del contenuto può essere impreciso, e indicare genericamente un tipo di
 
 Un nodo che è nel mezzo della CCN vede arrivare degli interessi, capisce che può reinstradare gli interessi verso un nodo che probabilmente contiene il contenuto. Il nodo ricorda l’interest che ha ricevuto. Quando riceve una risposta (anche molto più tardi perché la rete è delay tolerant), la inoltra alla sorgente. Nel frattempo, il nodo può ricevere un altro interest che cerca lo stesso contenuto. In questo caso non reinoltra la richiesta perché sta ancora aspettando la risposta precedente. Memorizza comunque chi gli ha fatto questa richiesta. Quando il nodo riceve la risposta la reinoltra a tutti i nodi che avevano fatto la stessa richiesta.
 
-## Schema CCN
+### Schema CCN
 
 ![img](./lu9139bfiofc_tmp_9b2f884437b0473b.png)
 
-### Interfacce
+#### Interfacce
 
 - Face0: interfaccia del nodo che può comunicare con un antenna
 - Face1: interfaccia che parla con la rete wired classica
-- Face2: interfaccia che parla con un applicazione  ci sono nodi che forniscono servizi e contemporaneamente sono dei router
+- Face2: interfaccia che parla con un applicazione &rarr; ci sono nodi che forniscono servizi e contemporaneamente sono dei router
 
-### Strutture dati
+#### Strutture dati
 
 **Content store**:
-
-è una cache. Il nodo può mettere contenuti a disposizione della rete e rispondere a interessi. Inoltre, memorizza anche i contenuti ricevuti perché c’è alta probabilità che questi contenuti vengano richiesti di nuovo. In questo modo può rispondere agli interest anche se non è il creatore originale del contenuto. Il content store non è first in - first out, la memoria è limitata, alcune contenuti sono scartati secondo politiche di caching come least recently used  o least frequently used.
+È una cache. Il nodo può mettere contenuti a disposizione della rete e rispondere a interessi. Inoltre, memorizza anche i contenuti ricevuti perché c’è alta probabilità che questi contenuti vengano richiesti di nuovo. In questo modo può rispondere agli interest anche se non è il creatore originale del contenuto. Il content store non è first in - first out, la memoria è limitata, alcune contenuti sono scartati secondo politiche di caching come least recently used  o least frequently used.
 
 **Pending interest table (PIT):**
-
-Se l’interest non è memorizzato nel contest store, il nodo va a guardare nel PIT che contiene i contenuti reinoltrati nel passato. Se il contenuto è stato già reinoltrato, il nodo sta aspettando una risposta, allora alla prossima interest per lo stesso contenuto non inoltra di nuovo il contenuto.
+Se l’interest non è memorizzato nel contest store, il nodo va a guardare nel PIT che contiene i contenuti reinoltrati nel passato. Se il contenuto è stato già reinoltrato, il nodo sta aspettando una risposta, allora alla prossima interest per lo stesso contenuto non inoltra di nuovo la richiesta.
 
 **Forwarding information based (FIB):**
-
-Se il contenuto non è né nel content store né nella PIT, allora devo guardare la FIB, analogo di una tabella di routing per CCN. C’è una tabella con due colonne. Si fa il matching del contenuto usando i prefissi nella colonna di sinistra, si usa la colonna di destra per reinoltrare l’interest. Per un prefisso ci possono essere più interfacce che fanno match, ma in questo paradigma la politica di reinoltro è unicast. Se ricevo due interest verso la stessa interfaccia posso fare round robin per scegliere invece un’altra interfaccia. Fare il round robin permette di avere più possibilità di ricevere una risposta perché nelle reti challenged non è detto che ci sia un cammino verso la destinazione. E inoltre si bilancia il carico facendo lavorare tutti i nodi.
+Se il contenuto non è né nel content store né nella PIT, allora il nodo guarda la FIB, analogo di una tabella di routing per CCN. C’è una tabella con due colonne. Si fa il matching del contenuto usando i prefissi nella colonna di sinistra, si usa la colonna di destra per reinoltrare l’interest. Per un prefisso ci possono essere più interfacce che fanno match, ma in questo paradigma la politica di reinoltro è unicast. Se ricevo due interest verso la stessa interfaccia posso fare round robin per scegliere invece un’altra interfaccia. Fare il round robin permette di avere più possibilità di ricevere una risposta perché nelle reti challenged non è detto che ci sia un cammino verso la destinazione e inoltre si bilancia il carico facendo lavorare tutti i nodi.
 
 ## Publish-subscribe
 
@@ -207,11 +205,13 @@ Definizione: disaccoppiamento delle entità comunicanti, in tempo, spazio e sinc
 
 ### Entità
 
-- **Publisher:** qualcuno che produce contenuto e li marca per indicare cosa contiene. Il publisher manda il contenuto al broker. Il publisher non sa quanti subscriber leggono il loro contenuto.
-- **Subscriber:** è il consumatore di contenuto. Il subscriber dice al broker che lui è interessato a contenuti targati in un certo modo. Aspetta poi passivamente che il broker gli porti i contenuti interessati.
-- **Broker:** riceve le notifiche di pubblicazione dai publisher, riceve le notifiche di subscribe/ unsubscribe dai subscriber. Quando c’è un contenuto interessante per i subscriber inoltra il contenuto. Il paradigma non definisce che tipo di entità è il broker, dipende dalla rete.
+![image-20200608151809627](image-20200608151809627.png)
 
-Il broker può essere un entità distribuita, anche l’intera rete.
+- **Publisher:** qualcuno che produce contenuti e li targa in un certo modo. Il publisher manda il contenuto al broker. Il publisher non sa quanti subscriber leggono il suo contenuto.
+- **Subscriber:** è il consumatore di contenuto. Il subscriber dice al broker che lui è interessato a contenuti targati in un certo modo. Aspetta poi passivamente che il broker gli porti i contenuti interessati.
+- **Broker:** riceve le notifiche di pubblicazione dai publisher e riceve le notifiche di subscribe/ unsubscribe dai subscriber. Quando c’è un contenuto interessante per i subscriber inoltra il contenuto. Il paradigma non definisce che tipo di entità è il broker, dipende dalla rete.
+
+Il broker può essere un entità distribuita (anche l’intera rete).
 
 ## Topic-based P/S
 
@@ -224,7 +224,6 @@ Nel caso ci sia una tassonomia il subscriber quando sottoscrive ad un canale, so
 ### Codice sottoscrittore
 
 ~~~java
-```
 Subscriber sub = new heatingSubscriber();
 EventService.subscribe(sub, "heating");
 
@@ -236,18 +235,16 @@ public class Heating implements Subscriber {
 }
 ~~~
 
-Codice sottoscrittore interessato a tutti i dati che riguardano la temperatura. Il metodo notify() risveglia il sottoscrittore, l’oggetto Object o contiene un campo temperatura
+Codice sottoscrittore interessato a tutti i dati che riguardano la temperatura. Il metodo `notify()` risveglia il sottoscrittore, l’oggetto `Object o` contiene un campo temperatura
 
 ### Scelta della tassonomia
 
 Prima dell’installazione del sistema bisogna già decidere i topic dei dati, la struttura dei dati, e la tassonomia. 
 
 **Tassonomia a granularità grossolana:**
-
-Se la granularità è molto grossolana il sottoscrittore riceverà anche contenuti che non interessano, questo è un problema nelle challenged network perché solitamente sono reti wireless broadcast, e si va a intasare il canale con dati inutili. Inoltre, gli apparati sono spesso a batterie. Il costo della computazione è basso, ma è alto il costo della comunicazione, ed aumenta in base alla distanza
+Se la granularità è molto grossolana il sottoscrittore riceverà anche contenuti che non interessano, questo è un problema nelle challenged network perché solitamente sono reti wireless broadcast, e si va a intasare il canale con dati inutili. Inoltre, gli apparati sono spesso alimentati a batterie. Il costo della computazione è basso, ma è alto il costo della comunicazione, ed aumenta in base alla distanza
 
 **Tassonomia a granularità fine:**
-
 Ci sono tanti livelli nella tassonomia, ciò permettere ai sottoscrittori di agganciarsi anche ad un livello profondo. In questo caso c’è il rischio di dover costringere un subscriber a sottoscriversi a tanti canali alternativi. Questo può portare di nuovo ad avere dati inutili.
 
 ## Content-based P/S
@@ -271,7 +268,7 @@ public class Heating implements Subscriber {
 - Si definisce un criterio, il broker invia il dato al subscriber solo se la temperatura è minore di 19 gradi.
 - Si crea il subscriber
 - Il subscriber si iscrive ai contenuti che soddisfano il criterio
-- Si sveglia con notify, il dato è già stato processato dal broker
+- Si sveglia con `notify()`, il dato è già stato processato dal broker
 
 ### Vantaggi/svantaggi
 
@@ -279,16 +276,14 @@ Non c’è da definire una tassonomia a priori, che se dovesse essere cambiata a
 
 ## Type based P/S
 
-Le informazione sono caratterizzate da una certa struttura.
-
-In un linguaggio object oriented sono classi. Il publisher genera un istanza di una classe, il subscriber si iscrive per ricevere oggetti appartenenti a specifiche classi
+Le informazione sono caratterizzate da una certa struttura. In un linguaggio object oriented sono classi. Il publisher genera un istanza di una classe, il subscriber si iscrive per ricevere oggetti appartenenti a specifiche classi
 
 ### Codice sottoscrittore
 
 ```java
 public class Sensor { public float temperature; }
 public class User { public float minT, maxT; }
-public class Heating implements Subscriber**** {
+public class Heating implements Subscriber<Sensor> {
 
 public void notify (Sensor o) {
 	if(o.temperature < 19°C)
@@ -301,36 +296,36 @@ public void notify (Sensor o) {
 - La classe Heating controlla gli attuatori del riscaldamento (i subscriber)
 - Il publisher è un sensore di temperatura o il device utente
 - Il subscriber riceve sia la temperatura che le preferenze dell’utente.
-- Nel caso di questa notify() sono ricevuti solo oggetti di classe sensore, non quelli della classe utente. Questo perché è un attuatore che accende/spegne riscaldamento in base alla temperatura dell’ambiente
+- Nel caso di questa `notify()` sono ricevuti solo oggetti di classe sensore, non quelli della classe utente. Questo perché è un attuatore che accende/spegne riscaldamento in base alla temperatura dell’ambiente
 
 ### Vantaggi / svantaggi
 
-Nel modello type-based si sta già pensando a livello di classe, mentre nel content base si pensa in astratto, è più flessibile. Dato che il codice va realizzato in modo da poter essere scritto nella memoria limitata dei sensori, l’approccio type-based permette di sapere a priori quando occuperà il codice.
+Nel modello type-based si sta già pensando a livello di classe, mentre nel content based si pensa in astratto, è più flessibile. Dato che il codice va realizzato in modo da poter essere scritto nella memoria limitata dei sensori, l’approccio type-based permette di sapere a priori quanto spazio occuperà il codice.
 
 ## Utilità w.r.t. sensori
 
 - **Topic:** arrivano tutte le informazioni di temperatura anche se sono di valore maggiore della soglia
 - **Type:** arrivano tutte le informazioni dei sensori, anche se sono di valore > soglia perché si ricevono tutti gli oggetti di un tipo
-- **Content:** arrivano solo le informazioni di interesse  risparmio in banda ed energia
+- **Content:** arrivano solo le informazioni di interesse &rarr;  risparmio in banda ed energia
 
 # Slide 3
 
 ## I sensori
 
-Un sensore è un apparato il cui primo obbiettivo è rilevare dei segnali / grandezze dal mondo fisico in cui è immerso e quantificarli. Spesso hanno un sistema operativo ad hoc come TinyOS, Contiki o RIOT. Sono sistemi piccoli e molto performanti, focalizzano l’attenzione sul risparmio energetico
+Un sensore è un apparato il cui primo obbiettivo è rilevare dei segnali / grandezze dal mondo fisico in cui è immerso e quantificarle. Spesso hanno un sistema operativo ad hoc come TinyOS, Contiki o RIOT. Sono sistemi piccoli e molto performanti, focalizzano l’attenzione sul risparmio energetico
 
 ### Componenti sensori
 
 - **Sensori veri e propri:** oggetti in grado di misurare una grandezza fisica analogica
-  - Passivi: rilevano qualcosa nell’ambiente senza interagire con 	esso
-  - Unidirezionali: puntano in una direzione (videocamera)
-  - Omnidirezionali: misurano in tutte le direzioni (termometro, 	microfono)
-  - Attivi: agiscono sull’ambiente per rilevare una grandezza (sonar, 	radar)
+  - *Passivi:* rilevano qualcosa nell’ambiente senza interagire con esso
+    - *Unidirezionali:* puntano in una direzione (videocamera)
+    - *Omnidirezionali:* misurano in tutte le direzioni (termometro, microfono)
+  - *Attivi:* agiscono sull’ambiente per rilevare una grandezza (sonar, radar)
 - **ADC:** analog digital converter, trasforma il segnale analogico in segnale digitale tramite campionamento
-- **Micro-controller:** elaborazione
+- **Micro-controller:** per elaborazione
 - **External-memory**
 - **Transceiver:** radio dell’apparecchio, trasmette e riceve
-- **Power source:** spesso la batteria
+- **Power source:** spesso è una batteria
 
 ## Altri dispositivi
 
@@ -338,7 +333,7 @@ Un sensore è un apparato il cui primo obbiettivo è rilevare dei segnali / gran
 
 **Sink:** è un apparato che riceve tutte le informazioni rilevate dai sensori. Possono esserci più sink nell’ambiente che raccolgono dati differenti o dati dello stesso tipo. Il sink è cablato alla rete fissa e porta i dati raccolti su un cloud o ad un server. Possono elaborare parzialmente o totalmente i dati.
 
-**Coordinatore:** in base a quello che ha raccolto dai sensori il coordinatore può mandare agli attuatori o anche ai sensori per farli funzionare in modo differente (es. aumentare la frequenza delle misurazioni)
+**Coordinatore:** in base a quello che ha raccolto dai sensori il coordinatore può mandare comandi agli attuatori e ai sensori per farli funzionare in modo differente (es. aumentare la frequenza delle misurazioni)
 
 Sensori, attuatori e sink possono essere fissi o mobili. Se sono fissi i rapporti di vicinato cambiano solo in base al duty cycle. Se sono mobili ci sono più complicazioni perché la mobilità contribuisce alla variazione della topologia.
 
@@ -347,7 +342,7 @@ Sensori, attuatori e sink possono essere fissi o mobili. Se sono fissi i rapport
 Apparati anche di piccole dimensioni:
 
 - Alimentati a batteria, rete elettrica o tramite l’ambiente (energia eolica, solare…)
-- Distribuiti sul territorio da monitorare. I sensori sono sparpagliati in modo casuale, i sink e i controllori vengono piazzati. Spesso i sensori sono difficili da raggiungere una volta piazzati (es. in fondo al mare, in montagna...)
+- Distribuiti sul territorio da monitorare &rarr;  i sensori sono sparpagliati in modo casuale, i sink e i controllori vengono piazzati. Spesso i sensori sono difficili da raggiungere una volta piazzati (es. in fondo al mare, in montagna...)
 - Muniti di interfaccia wireless per la comunicazione
 
   - Eterogenei, i sink sono diversi dai sensori
@@ -358,85 +353,64 @@ Apparati anche di piccole dimensioni:
 
 ## Multipath fading
 
-Tutte le volte che si usa un canale wireless utilizzando un’antenna multidirezionale, il segnale viene propagato in tutte le direzioni. Il segnale può essere attenuato anche dall’acqua (quindi anche le persone, la pioggia), oppure essere riflesso dal metallo (quindi anche le automobili).
-
+Tutte le volte che si usa un canale wireless utilizzando un’antenna multidirezionale, il segnale viene propagato in tutte le direzioni. Il segnale può essere attenuato dall’acqua (quindi anche persone e pioggia), oppure essere riflesso dal metallo (quindi anche le automobili).
 Quando le onde sono riflesse si ha il multipath fading, cioè un segnale riflesso si sovrappone al segnale originale. Se i due segnali hanno fase diversa, la somma / sottrazione algebrica delle onde sinusoidali può indebolire o interferire con il segnale originale.
 
 ## Requisiti WSN
 
-### Accuratezza monitoraggio
-
+**Accuratezza monitoraggio**:
 Le reti di sensori misurano determinate grandezze ambientali, per poi memorizzare i valori o avvisare quando viene superato un valore di soglia preimpostata. Questi sensori devono essere piazzati in modo che tutta la superficie sia coperta dai sensori, in modo tale da verificare eventi con alta probabilità (non 100% perché i sensori si possono rompere).
 
-### Autonomic / self organization
+**Autonomic / self organization:**
+La rete deve potersi riconfigurare da sola perché spesso i sensori di cui è composta sono  difficili da raggiungere. I nodi devono quindi controllare costantemente le condizioni della rete di sensori (chi sono i vicini). Nella progettazione si deve pensare in anticipo agli ostacoli ambientali (alte temperature, campi elettromagnetici) per scrivere codice sui sensori che permetta loro di riconfigurarsi.
 
-La rete deve potersi riconfigurare da sola perché spesso i sensori di cui è composta sono spesso difficili da raggiungere. I nodi devono quindi controllare costantemente le condizioni della rete di sensori (chi sono i vicini). Nella progettazione si deve pensare in anticipo agli ostacoli ambientali (alte temperature, campi elettromagnetici) per scrivere codice sui sensori che permette loro di riconfigurarsi.
-
-### Energy saving
-
-Se non possiamo collegare i sensori alla rete elettrica è saggio prevedere di costruire la parte di computazione e comunicazione per risparmiare energia. Il consumo energetico è estremamente dipendente dall’hardware e dall’uso del dispositivo. 
-
+**Energy saving:**
+Se non è possibile collegare i sensori alla rete elettrica è saggio prevedere di costruire la parte di computazione e comunicazione per risparmiare energia. Il consumo energetico è estremamente dipendente dall’hardware e dall’uso del dispositivo. 
 Nella pila ISO /OSI ogni livello è una scatola nera che offre servizi al livello superiore e chiede servizi a quello inferiore. C’è un livello di astrazione tale per cui i livelli più alti sono indipendenti dall’implementazione dei livelli più bassi. Ad esempio ai livelli superiori non interessa se la comunicazione è fatta su fibra ottica o cavo in rame. Nelle WSN questo non è più vero. Lo stack va progettato tutto insieme, si sceglie l’hardware in base alle necessità della rete, e si sviluppa il software in base all’hardware. Si parla di cross layer design. Alcuni hardware consumano di più a mandare che a ricevere, altri consumano uguale. Il costo della computazione invece è poco più alto rispetto a quando il sensore dorme. 
 
-Ci sono però diversi **livelli di dormienza**:
+Ci sono però diversi livelli di dormienza:
 
-- **completamente dormente** &rarr; CPU e radio ferma, c’è solo un orologio che fa interrupt per svegliare il sensore
-- **dorme poco** &rarr; il sensore tiene acceso il transceiver in modalità ricezione solo per i messaggi indirizzati a lui. Ogni scheda di rete ha un indirizzo fisico. Quando arriva un nuovo messaggio,la scheda di rete controlla il mac address di destinazione, se corrisponde al suo, la scheda di rete fa un interrupt per svegliare il sensore.
-- **Ricezione promisqua** &rarr; qualunque dato ricevuto indipendentemente dal mac address di destinazione. Il dato viene ritenuto di interesse per il sensore che viene svegliato.
+- **completamente dormente** &rarr; CPU e radio ferme, c’è solo un orologio che fa interrupt per svegliare il sensore
+- **dorme poco** &rarr; il sensore tiene acceso il transceiver in modalità ricezione solo per i messaggi indirizzati a lui. Ogni scheda di rete ha un indirizzo fisico. Quando arriva un nuovo messaggio, la scheda di rete controlla il MAC address di destinazione, se corrisponde al proprio, la scheda di rete fa un interrupt per svegliare il sensore
+- **Ricezione promisqua** &rarr; qualunque dato ricevuto indipendentemente dal MAC address di destinazione sveglia il sensore
 
 É vero che in dormienza i sensori consumano molto meno rispetto a riceve e trasmettere, ma quando il sensore viene risvegliato il consumo di energia ha un picco di risveglio che poi si abbassa per tornare sul livello di consumo energetico medio 
 
-### lifetime sensori e rete
+**lifetime sensori e rete:**
 
-È meglio massimizzaere il lifetime della rete e non del singolo sensore. I sensori fanno anche da router usando energia ( un po’ come nelle content sensor network)
+È meglio massimizzaere il lifetime della rete e non del singolo sensore. I sensori fanno anche da router usando energia ( un po’ come nelle CCN).
+Se si vuole minimizzare il consumo il sensore comunica solo con il sink, e trascura qualunque messaggio che non ha il suo MAC address (nodo selfish). Facendo così non fa da router. Il problema che in questo modo gli altri sensori potrebbero essere costretti a usare più energia per comunicare a distanze più grandi. Quindi potrebbe essere interessante massimizzaere la vita della rete e non del singolo sensore. Ogni sensore fa da router così tutti hanno una durata di batteria maggiore. Si dice load balancing, non c’è nessun sensore che lavora più di altri. Se un sensore finisce l’energia potrebbe diventare un punto di partizione nella rete e portare ad un buco nel monitoraggio.
 
-Se voglio massimizzare il consumo il sensore comunica solo con il sink, e trascura qualunque messaggio che non ha il suo MAC address (nodo selfish). Facendo così non fa da router. Il problema che in questo modo gli altri sensori potrebbero essere costretti a usare più energia per comunicare a distanze più grandi. Quindi potrebbe essere interessante massimizzaere la vita della rete e non del singolo sensore. Ogni sensore fa da router, e tutti durano di più. Load balancing, non c’è nessun sensore che lavora più di altri. Se un sensore finisce l’energia potrebbe diventare un punto di partizione nella rete. E potrebbe esserci un buco nel monitoraggio.
-
-### Scalabilità
-
+**Scalabilità:**
 Tanti nodi, alta densità.
 
-### Robustezza
-
+**Robustezza:**
 I sensori devono resistere a polvere, pioggia, alta temperature. La rete deve prevedere sensori che si scaricano, vengono spostati o vengono rotti. Il sistema deve essere robusto per adattarsi in modo autonomo, mantenendo l’accuratezza di monitoraggio. 
 
-### Consenso
-
+**Consenso:**
 Il dato riportato da un singolo sensore non è significativo come l’insieme dei dati raccolti da tanti sensori.
 
 ## Deployed vs unplanned
 
-### Deployed
-
-Si studia come è fatta l’area in cui si vogliono piazzare i sensori e si sceglie accuratamente la posizione di ogni sensore. È un problema di max/min, si vogliono massimizzare / minimizzare delle grandezze rispettando dei vincoli.
-
-Esempio: massimizzare accuratezza e contemporaneamente minimizzare  costi.
-
+**Deployed:**
+Si studia come è fatta l’area in cui si vogliono piazzare i sensori e si sceglie accuratamente la posizione di ogni sensore. È un problema di max/min, si vogliono massimizzare/ minimizzare delle grandezze rispettando dei vincoli.
+*Esempio:* massimizzare accuratezza e contemporaneamente minimizzare  costi.
 Normalmente queste reti sono composte da oggetti piuttosto grandi.
 
-### Unplanned
-
-I sensori sono sparpagliati a caso nell’area interessata.
-
-I colori indicano l’interesse di rilevare un certo evento. Rosso indica che è più importante rilevare l’evento in quella zona.
+**Unplanned:**
 
 ![img](./lu9139bfiofc_tmp_61e2a55b461a1c8e.png)
 
-L ’immagine indica come sono seminati i sensori. Ci sono chiazze di sensori più dense che corrispondono alle aree della figura precedente. Lo sparpagliare non è perfetto perché è importante creare anche dei cammini di comunicazione tra una chiazza e l’altra per fare arrivare i dati al sink.
+I sensori sono sparpagliati a caso nell’area interessata. I colori indicano l’interesse di rilevare un certo evento. Rosso indica che è più importante rilevare l’evento in quella zona.
 
 ![img](./lu9139bfiofc_tmp_a1a66a28ea9528f8.png)
 
+L’ immagine indica come sono seminati i sensori. Ci sono chiazze di sensori più dense che corrispondono alle aree della figura precedente. Lo sparpagliare non è perfetto perché è importante creare anche dei cammini di comunicazione tra una chiazza e l’altra per fare arrivare i dati al sink.
+
 ## Localizzazione e sincronizzazione
 
-Se i sensori sono stati piazzati si conoscono le coordinate, ma se i sensori sono stati sparpagliati devono essere in grado di individuare la loro posizione, assoluta (lat / long) oppure in relazione ad altri sensori.
-
-Il GPS non funziona indoor, in foreste, strade strette e consuma molta batteria.
-
-I sensori possono usare il segnale dei sink che sono dispositivi fissi per capire dove sono. Utilizzando caratteristiche come il tempo di propagazione del segnale.
-
-La posizione è utile per aggregare i dati dei sensori vicini, e per capire in che posizione un certo evento si sta verificando.
-
-Può essere utile tenere sincronizzati gli orologi dei sensori per etichettare i dati anche in modo temporale. 
+Se i sensori sono stati piazzati si conoscono le coordinate, ma se i sensori sono stati sparpagliati devono essere in grado di individuare la loro posizione, assoluta (lat/long) oppure in relazione ad altri sensori. Il GPS non funziona indoor, in foreste, strade strette e consuma molta batteria. I sensori possono usare il segnale dei sink che sono dispositivi fissi per capire dove sono sfruttando caratteristiche come il tempo di propagazione del segnale.
+La posizione è utile per aggregare i dati dei sensori vicini, e per capire in che posizione un certo evento si sta verificando. Può essere utile tenere sincronizzati gli orologi dei sensori per etichettare i dati anche in modo temporale. 
 
 ## Naming e routing
 
@@ -444,57 +418,51 @@ Non interessa andare verso un certo indirizzo o sensore, ma andare alla ricerca 
 
 ## Range di comunicazione
 
-### Hop lunghi
-
-i sensori comunicano con il sink, i sensori lontani dal sink esauriranno prima le batterie perché la potenza necessaria di trasmissione varia con il quadrato della distanza. C’è probabilità di interferenza tra i sensori che stanno comunicando contemporaneamente.
+**Hop lunghi:**
+I sensori comunicano con il sink, i sensori lontani dal sink esauriranno prima le batterie perché la potenza necessaria di trasmissione varia con il quadrato della distanza. C’è probabilità di interferenza tra i sensori che stanno comunicando contemporaneamente.
 
 ![img](./lu9139bfiofc_tmp_2db067ddc2c154da.png)
 
-### hop corti 
-
-i sensori comunicano con altri sensori, i sensori lontani dal sink comunicano comunque a breve distanza. Il problema è che un singolo sensore potrebbe diventare un punto fragile perché magari si trova al centro e riceve messaggi da tutti gli altri sensori.
+**hop corti:**
+I​ sensori comunicano con altri sensori, i sensori lontani dal sink comunicano comunque a breve distanza. Il problema è che un singolo sensore potrebbe diventare un punto fragile perché  si trova al centro e riceve messaggi da tutti gli altri sensori.
 
 Ci sono due soluzioni a questo problema:
 
 1. potenza variabile per la trasmissione
 2. aggregazione dei dati con ottimizzazione della bandwidth usata
 
- Rispetto agli hop lunghi c’è meno probabilità di interferenza. Gli hop corti sono preferiti nelle WSN.
+Rispetto agli hop lunghi c’è meno probabilità di interferenza. Gli hop corti sono preferiti nelle WSN.
 
 ![img](./lu9139bfiofc_tmp_b6ed2029de26e3a3.png)
 
 ## Data Aggregation
 
 - **La stessa segnalazione può arrivare da più sensori** → in questo caso si eliminano i duplicati inviando al sink una volta sola l’evento
-- **Gli eventi possono essere** **aggregati** → Certe volte non è necessario inviare tutti i dati che sono stati letti, alcuni nodi potrebbero fare un’aggregazione dei dati processandoli prima di inviarli al sink. Il tipo di processing dipende dal tipo di rete che si vuole sviluppare (es. un sensore riceve tante misure di temperature, fa media e varianza e inoltra solo quei dati).
+- **Gli eventi possono essere** **aggregati** → Certe volte non è necessario inviare tutti i dati che sono stati letti, alcuni nodi potrebbero fare un’aggregazione dei dati processandoli prima di inviarli al sink. Il tipo di processing dipende dal tipo di rete che si vuole sviluppare (es. un sensore riceve tante misure di temperature, fa media e varianza e inoltra solo il risultato).
 
-Messaggi piccoli vs grandi → i messaggi piccoli sprecano meno energia e hanno maggior possibilità di successo. C’è poca probabilità di sovrapporsi con altri nodi se comunico per un breve intervallo temporale.
+- **Messaggi piccoli vs grandi** → i messaggi piccoli sprecano meno energia e hanno maggior possibilità di successo. C’è poca probabilità di sovrapporsi con altri nodi se la  comunicazione dura un breve intervallo temporale.
 
-I nodi devono essere capaci di aggreggare → application awareness, intelligenza dei nodi per capire la semantica dei dati che sono trasmessi nella rete
+- **I nodi devono essere capaci di aggreggare** → application awareness, intelligenza dei nodi per capire la semantica dei dati che sono trasmessi nella rete
 
 ## Aspetti secondari WSN
 
-### Database
+**Database:**
+È necessario raccogliere i dati prodotti dai sensori, il DB deve essere distribuito, i sensori devono memorizzare poche informazioni.
 
-Raccogliere dati prodotti dai sensori, deve essere distribuito, i sensori devono memorizzare poche informazioni.
-
-### Sicurezza
-
+**Sicurezza:**
 Il canale è wireless e il segnale può essere recepito da tutti quelli che sono in grado di sentirlo. La soluzione più semplice è cifrare i dati, un’operazione molto costosa in termini di computazione e memoria.
 
-### Attuatori
-
+**Attuatori:**
 Possono influenzare il sensing dei sensori mobili. 
 
 ## Nodi statici vs mobili
 
-**Ferries** → nodi di cui si può controllare il movimento per facilitare la comunicazione o per coprire aree rimaste scoperte o partizionate. I ferries potrebbero anche non cambiare la topologia della rete, ma essere dei magazzini di dati che vengono spostati da un’area all’altra (paradigma store, carry and forward).
-
+I **ferries** sono nodi di cui si può controllare il movimento per facilitare la comunicazione o per coprire aree rimaste scoperte o partizionate. I ferries potrebbero anche non cambiare la topologia della rete, ma essere dei magazzini di dati che vengono spostati da un’area all’altra (paradigma store, carry and forward).
 Il movimento dei ferries può essere periodico e regolare, controllabile, o libero perché installati su veicoli o animali. Nell’ultimo caso la topologia cambia in modo quasi imprevedibile, c’è una maggiore probabilità di partizione della rete.
 
-## Architetture gerarchiche
+## Three tiered architecture
 
-### Three-tiered architecture
+È un architettura gerarchica
 
 - **Sensori** → alcuni sono più potenti in termini di calcolo, antenna e disponibilità energetica
 
@@ -508,35 +476,32 @@ Il movimento dei ferries può essere periodico e regolare, controllabile, o libe
 
 ## Tassonomia minima
 
-### Hierarchical
-
+**Hierarchical:**
 Ci sono nodi di tipo diverso, alcuni più potenti. Sono reti più semplici da implementare perché spostano la computazione e il coordinamento su nodi centrali nella rete
 
-### Reverse path forwarding
+**Reverse path forwarding:**
+Questo approccio ipotizza che il sink faccia delle query che informino la rete di sensori di quello che il sink vuole sapere e quanto spesso. Le query fanno dei cammini che sono ricordati dai nodi, quando un nodo ha una risposta per la query inoltra seguendo il cammino al rovescio. Questi approcci assumono implicitamente che il canale sia full duplex (bidirezionale). 
 
-L’approccio ipotizza che il sink fa delle query che informano la rete di sensori di quello che il sink vuole sapere e quanto spesso. Le query fanno dei cammini che sono ricordati dai nodi, quando un nodo ha una risposta per la query inoltra seguendo il cammino al rovescio. Questi approcci assumono implicitamente che il canale sia full duplex (bidirezionali). 
-
-### Cost – field
-
+**Cost – field:**
 I sensori sono preprogrammati per riportare il verificarsi di un evento, seguono dei cammini precostituiti.
 
-## Assunzione sul sistema
+## Assunzioni sul sistema
 
 - Sensori distribuiti sul territorio in modo unplanned, i sensori conoscono la loro posizione che però non è usata nell’algoritmo di instradamento ma solo per arricchire il dato rilevato.
 - I sensori hanno ID univoci e orologi sincronizzati
 - I sensori non sono mobili
-- La rete è densa, ci sono path ridondanti, topologia significativamente connessa
+- La rete è densa, ci sono path ridondanti, e la topologia è significativamente connessa
 - I sensori sono intelligenti, sanno ragionare sui dati
 - Il canale è wireless, le antenne sono omnidirezionali
 - Preferiti hop corti
 
 ## Directed diffusion
 
-### Assunzioni sui dati
-
 Rientra nella categoria del reverse path forwarding.
 
-Il sink invia delle query chiamate interest. Si dice interest e non query perché il sink annuncia di essere interessato ad un evento, ma non sa se lo riceverà mai. Diverso dalle query che spesso ritornano qualcosa
+### Assunzioni sui dati
+
+Il sink invia delle query chiamate interest. Si dice interest e non query perché il sink annuncia di essere interessato ad un evento, ma non sa se lo riceverà mai. Diverso dalle query che spesso ritornano qualcosa.
 
 L’interest è composto da coppie attributo valore:
 
@@ -554,7 +519,7 @@ expiresAt = 01:30:40
 
 - **type** → dice al sensore di stare attento ad un tipo di evento. Se un sensore non è capace di rilevare un evento farà solo da relay per i messaggi. Il duty cycle è diverso per i sensori che fanno solo relay
 - **interval** → i sensori riconfigurano il loro duty cicle per misurare l’evento con la frequenza definita
-- **rect** → area rettangolare in cui cercare l’evento. Le coordinate non sono coordinate assolute di lat e long, ma relativa ad un punto della rete
+- **rect** → area rettangolare in cui cercare l’evento. Le coordinate non sono coordinate assolute di latitudine e longitudine, ma relative ad un punto della rete
 - **timestamp** → quando è stato fatto l’interest, gli orologi devono essere sincronizzati
 - **expiresAt** → quando scade l’interest
 
@@ -562,19 +527,16 @@ expiresAt = 01:30:40
 
 **canali bi-direzionali**
 
-**reverse path forwarding**
-
+**reverse path forwarding**:
 Gli interest installano informazioni di stato nei sensori che ricordano quali cammini sono stati seguiti dagli interest. 
 
-**Reactive routing**
-
+**Reactive routing**:
 Non vengono mantenute informazioni di instradamento o rapporti di vicinato. Le informazioni di stato vengono costruite solo nel momento in cui il sink inoltra un interest, e i cammini sono mantenuti attivi solo fino a quando questo interest è attivo. Le sorgenti sono i sensori, le destinazioni sono i sink.
 
-**Flooding degli interessi**
+**Flooding degli interessi**:
+L’algoritmo si divide in due fasi. La prima è la diffusione degli interest. Il flooding è la politica di instradamento più banale: la sorgente invia il messaggio a tutti i suoi vicini, i nodi che ricevono il messaggio lo reinoltrano a tutti i suoi vicini escludendo il nodo da cui l’hanno ricevuto.
 
-L’algoritmo si divide in due fasi. La prima è la diffusione degli interest. Il flooding è la politica di instradamento più banale: la sorgente invia il messaggio a tutti i suoi vicini, i nodi che ricevono il messaggio lo reinoltrano a tutti i suoi vicini escludendo il nodo da cui l’ha ricevuto.
-
-Pila ISO/OSI:
+**Pila ISO/OSI:**
 
 1. Livello fisico
 2. Livello data link → mac address / hardware address
@@ -582,22 +544,15 @@ Pila ISO/OSI:
 4. livello trasporto → numero di porta
 
 L’hardware address può essere unicast o broadcast. L’informazione ad alto livello della interest che è destinata solo ad alcuni sensori, deve essere instradato usando l’hardware address. In queste reti wireless non si può fare il flooding classico diffondendo il segnale a tutti i sensori. Questo perché il segnale non è detto che venga rilevato da tutti i nodi a causa del duty cycle.
+Non è obbligatorio fare tutte le comunicazione broadcast, quando le notifiche tornano indietro si indirizza a livello due unicast. Il cammino di ritorno non è unico ma si memorizzano tutti i cammini possibili, e poi si usa il migliore per il ritorno.
 
-Non è obbligatorio fare tutte le comunicazione broadcast, quando le notifiche tornano indietro si indirizza a livello due unicast. 
-
-Il cammino di ritorno non è unico ma si memorizzano tutti i cammini possibili, e poi si usa il migliore per il ritorno.
-
-**Aggregazione dati**
-
-In direct diffusion i sink possono essere multipli, possono diffondere interessi diversi ma c’è la possbilità che sink differenti diffondano lo stesso interest. 
-
-I sensori capiscono la semantica dei dati fanno aggregazione filtrando i duplicati o adattando la frequenza con cui i dati vengono mandati verso i sink.
-
-Crying baby → se due sink diversi chiedono lo stesso evento a frequenza diversa i sensori devono adattare il duty cycle per quello a frequenza maggiore. I sensori che hanno visto solo l’interest con frequenza più bassa però non vogliono riceve l’interest a frequenza più alta. A questi sensori può arriva una notifica ogni *n* notifiche, oppure si fa la media di *n* notifiche e la si invia al sensore.
+**Aggregazione dati**:
+In direct diffusion i sink possono essere multipli, possono diffondere interessi diversi ma c’è la possbilità che sink differenti diffondano lo stesso interest. I sensori capiscono la semantica dei dati e fanno aggregazione filtrando i duplicati o adattando la frequenza con cui i dati vengono mandati verso i sink.
+*Crying baby* → se due sink diversi chiedono lo stesso evento a frequenza diversa i sensori devono adattare il duty cycle per quello a frequenza maggiore. I sensori che hanno visto solo l’interest con frequenza più bassa però non vogliono riceve l’interest a frequenza più alta. A questi sensori può arrivare una notifica ogni *n* notifiche, oppure si fa la media di *n* notifiche e la si invia al sensore.
 
 ### Diffusione interesse
 
-Il sink periodicamente guarda nella propria cache gli interessi attivi, rimuove quelli scaduti e invia ogni interesse attivo. Dato che il broadcast non è completo a causa del duty cycle dei sensori, è fondamentale diffondere l’interest periodicamente in broadcast.  Il primo broadcast usa un alto interval (ogni quanto un sensore invia il dato) perché il sink non sa se l’evento a cui è interessato succederà mai. Infatti l’azione di risveglio del sensore è molto costosa. Nel momento in cui l’evento si verifica e un sensore comincia a inviare notifiche al sink, allora il sink cambia l’intervallo di monitoraggio dei sensori.
+Il sink periodicamente guarda nella propria cache gli interessi attivi, rimuove quelli scaduti e invia ogni interesse attivo. Dato che il broadcast non è completo a causa del duty cycle dei sensori, è fondamentale diffondere l’interest periodicamente in broadcast. Il primo broadcast usa un alto interval (ogni quanto un sensore invia il dato) perché il sink non sa se l’evento a cui è interessato succederà mai. Infatti l’azione di risveglio del sensore è molto costosa. Nel momento in cui l’evento si verifica e un sensore comincia a inviare notifiche al sink, allora il sink cambia l’intervallo di monitoraggio dei sensori.
 
 Ogni nodo ricorda l’interest nella cache, ogni entry è formata da:
 
@@ -608,9 +563,7 @@ Ogni nodo ricorda l’interest nella cache, ogni entry è formata da:
   - data rate → rate a cui devo mandare le notifiche al vicino
   - duration → ricavata da timestamp e expiration.  	
 
-I gradienti sono i nodi vicini a cui devo reinoltrare un evento. Posso avere più vicini e inviare i dati ad ogni vicino con data rate diverso
-
-Gli interest duplicati sono scartati mantenendo solo l’ultimo. Nel gradiente non c’è scritto l’identificatore e la distanza dal sink. Un nodo che riceve un evento sa solo quali sono i next hop, non sa nemmeno se il next hop è un sink.
+I gradienti sono i nodi vicini a cui il sensore deve reinoltrare un evento. Un nodo può avere più vicini e inviare i dati ad ogni vicino con data rate diverso Gli interest duplicati sono scartati mantenendo solo l’ultimo. Nel gradiente non c’è scritto l’identificatore e la distanza dal sink. Un nodo che riceve un evento sa solo quali sono i next hop, non sa nemmeno se il next hop è un sink.
 
 ![img](./lu9139bfiofc_tmp_45802aaf8bd4e234.png)  
 A destra c‘è il sink, il cerchio azzurro è la zona in cui il sink vuole monitorare l’evento. SRC è la sorgente dell’evento
@@ -619,7 +572,7 @@ A destra c‘è il sink, il cerchio azzurro è la zona in cui il sink vuole moni
 2. i primi 2 nodi capiscono che non possono acquisire quella misurazione, si ricordano però come gradiente il sink, senza sapere se è davvero il sink o semplicemente un nodo intermedio
 3. Il nodo in alto fa broadcast
 4. I due sensori a sinistra ricevono l’interest, e ricordano come next hop il sensore precedente
-5. Anche il sink riceve il broadcast dell’interest, è implicitamente un ACK per il sink. In più si vogliono supportare sink multipli. Anche il sink arancione ha una cache e si ricorda che se riceve un interest lo rimanda al sensore.
+5. Anche il sink riceve il broadcast dell’interest, è implicitamente un ACK per il sink. In più si vogliono supportare sink multipli. Anche il sink arancione ha una cache e si ricorda che se riceve un interest lo deve rimandare al sensore.
 6. Anche il sensore in basso a sinistra del sink fa la stessa cosa di quello in alto
 7. Il nodo centrale avrà due gradienti, ma lo stesso interest. Non fa di nuovo flooding perché è un duplicato.
 8. I nodi facendo broadcast costruiscono anche dei gradienti all’indietro, sembrano controintuitivi ma in realtà servono per diffondere i dati anche a sink diversi.
@@ -632,7 +585,7 @@ Quando si verifica un evento per cui esiste un interesse attivo:
 
 - Il nodo SRC manda l’evento a tutti i vicini di cui ha un gradiente,  è una trasmissione broadcast con indirizzi unicast
 - Il sensore più vicino alla SRC riceve l’evento e lo rimanda al nodo alla sua destra e a quello in basso.
-- La freccia è tratteggiata perché il nodo in basso ha già ricevuto la notifica dell’evento da SRC. Scarta quindi l’evento, sa che il cammino verso l’alto è più lento
+- La freccia è tratteggiata perché il nodo in basso ha già ricevuto la notifica dell’evento da SRC. Scarta quindi l’evento sapendo che il cammino verso l’alto è più lento
 - Così via per tutte le frecce tratteggiate
 - Il sink riceve eventi da entrambi i cammini, uno dei due sarà migliore perché più veloce o con meno interferenze.
 
@@ -644,7 +597,7 @@ Quando si verifica un evento per cui esiste un interesse attivo:
 
 ### Rinforzo positivo
 
-Il sink manda un interest unicast soltanto al vicino da cui riceve meglio le notifiche, con un interval più basso e quindi una frequenza più bassa. Il nodo vicino al sink sceglierà il proprio vicino migliore e manda indietro il nuovo interest del sink. Si continua fino alla sorgente, rinforzando solo il cammino migliore.
+Il sink manda un interest unicast soltanto al vicino da cui riceve meglio le notifiche chiedendo un interval minore e quindi una frequenza più alta. Il nodo vicino al sink sceglierà il proprio vicino migliore e manda indietro il nuovo interest del sink. Si continua fino alla sorgente, rinforzando solo il cammino migliore.
 
 ### Rinforzo negativo
 
@@ -652,7 +605,7 @@ Il sink manda un interest unicast soltanto al vicino da cui riceve meglio le not
 
 1. **soft state** &rarr; i record vengono mantenuti solo per il loro lifetime, le informazioni obsolete vengono cancellate automaticamente. Il sink potrebbe voler monitorare un evento ad una frequenza maggiore, ma non aggiorna il cammino peggiore i cui nodi manterranno la frequenza dell'interest originale. I nodi scartano i gradienti quando scadono, il cammino peggiore lentamente andrà a spegnersi. 
 
-2. **hard state** &rarr; le informazioni di stato sono ricordate in un nodo fino a quando non vengono esplicitamente aggiornate o cancellate. Il sink manda di nuovo una interest unicast per lo stesso evento, nella stessa area di interest ma sul cammino peggiore richiede una frequenza molto maggiore. Il cammino non si spegne, il sink riceverà ogni tanto delle notifiche duplicate dal cammino peggiore e migliore.
+2. **hard state** &rarr; le informazioni di stato sono ricordate in un nodo fino a quando non vengono esplicitamente aggiornate o cancellate. Il sink manda di nuovo una interest unicast per lo stesso evento, nella stessa area di interesse ma sul cammino peggiore richiede una frequenza molto minore. Il cammino non si spegne, il sink riceverà ogni tanto delle notifiche duplicate dal cammino peggiore e migliore.
 3. **hard state violento** &rarr; Il sink manda un interest con timestamp e expire uguali. La durata quindi sarà 0, e tutti i nodi a cascata cancelleranno il corrispondente gradiente.
 
 Spegnendo tutti i nodi del cammino peggiore si risparmia batteria, lasciandoli accesi a frequenza alta si mantiene un cammino di backup nel caso ci fossero problemi con il cammino peggiore.
@@ -668,7 +621,7 @@ Queste due situazioni sono indistinguibili per il sink, quindi avere dei cammini
 
 Se un nodo sul cammino migliore non riceve più notifiche dal suo vicino per qualunque motivo, ma ricevere notifiche a bassa frequenza da un nodo sul cammino peggiore, allora il nodo va a rinforzare il suo vicino. Il cammino migliore devia, anche gli altri nodi scelgono i loro nodi migliori fino ad arrivare alle sorgenti
 
-### Downconvert
+#### Downconvert
 
 Se un sensore qualsiasi riceve le notifiche con un determinato rate non necessariamente deve mandarle a tutti i suoi gradienti con lo stesso rate, ma adatta la sua frequenza a quella scritta all'interno del gradiente. Il nodo fa una media o manda solo l'ultima notifica in unicast. I nodi utilizzano dei beacon, messaggi che notificano i vicini di essere svegli, i nodi fanno quindi un invio unicast a tutti i gradienti svegli.
 
@@ -700,7 +653,8 @@ Se un sensore qualsiasi riceve le notifiche con un determinato rate non necessar
 
 Direct diffusion rientra nella categoria di reverse path forwarding, non tollera la mobiltà dei sink, e c'è il rischio di formare loop. È utile quando ci sono tante interest con tanti eventi. L'altra categoria è cost-field-based di cui fa parte RUMOR.
 
-pochi eventi ma tante query &rarr; rumor routing <br>tanti eventi ma poche query &rarr; direct diffusion
+pochi eventi ma tante query &rarr; rumor routing
+tanti eventi ma poche query &rarr; direct diffusion
 
 ## Rumor routing
 
@@ -712,7 +666,7 @@ Rumor routing invece di fare un flooding dei dati fa una diffusione casuale dell
 - nodi bianchi &rarr; non hanno nessuna informazione sull'evento in corso
 - doppio tratto &rarr; path per le query
 
-I nodi in modo random decidono se mandare la notifica che l'evento si sta verificando o meno. Se stanno per mandare l'evento scelgono di nuovo in modo random un vicino. Il nodo vicino riceve l'agente (evento), e quindi sa che a distanza 1 da lui c'è un certo tipo di evento ma non conosce i dettagli. Anche questo nodo scegli un nuovo vicino random a cui inviare l'evento, la distanza è 2.
+I nodi in modo random decidono se mandare la notifica che l'evento si sta verificando o meno. Se stanno per mandare l'evento scelgono di nuovo in modo random un vicino. Il nodo vicino riceve l'agente (evento), e quindi sa che a distanza 1 da lui c'è un certo tipo di evento ma non conosce i dettagli. Anche questo nodo sceglie un nuovo vicino random a cui inviare l'evento, la distanza è 2.
 
 Le query inviate dal sink viaggiano in modo random, fino a quando arrivano ad un nodo che sa che si è verificato l'evento. Da questo punto in poi la query non viaggia più in modo casuale ma segue il percorso fino al nodo che sa tutto di quell'evento. La risposta con la descrizione completa dell'evento viaggia al contrario fino al sink. Le analisi statistiche dimostrano che la probabilità di intersezione tra una query ed un nodo che conosce dov'è un evento non è bassa. 
 
@@ -795,8 +749,8 @@ when (event must be looked for) do
 	send query to a dest <-- f({neighbors},R);
 	//si attende risposta per un tempo T, il nodo può riprovare,
 	//fare il flooding della query oppure non fare nulla
-	if (no reply within T) then retry or flood
-		query or resign;
+	if (no reply within T) then 
+		retry or flood query or resign;
 //un nodo che riceve una query fa una reply che viaggia in un cammino a
 //rovescio
 upon reception of a query do
@@ -825,12 +779,15 @@ Nel rumor routing il falso negativo si presenta quando le query girando a caso n
 
 ### Massimizzare probabilità intersezione
 
-#### Usando la posizione
+#### **Usando la posizione**
 
 Query e agenti viaggiano in modo ortogonale così da incrociarsi sempre. Le query verso E/O, le notifiche verso N/S. I sensori hanno delle bussole che indicano il Nord, e usano antenne unidirezionali.
 
-- **Usando hardware specifico** &rarr; Le antenne del trasmittente e ricevente devono essere allineate e sfasate al massimo del 15% rispetto alla linea retta, e devono essere in line of sight. Le antenne devono poter essere ruotate a nord o sud usando un motore. 
-- **Usando i beacon** &rarr; I sensori si scambiano dei beacon con cui oltre al proprio mac address indicano anche la loro posizione stimata. Un nodo che deve inoltrare un messaggio riceve i beacon dai nodi vicini e in base alla sua posizione stima qual è il nodo che si trova più in direzione Nord di lui. Ovviamente i sensori non sono esattamente allineati. Questo non costa nulla sulla rete che si sta considerando perchè i beacon vengono già mandati nel rumor routing standard.
+**Usando hardware specifico**:
+Le antenne del trasmittente e ricevente devono essere allineate e sfasate al massimo del 15% rispetto alla linea retta, e devono essere in line of sight. Le antenne devono poter essere ruotate a nord o sud usando un motore. 
+
+**Usando i beacon**:
+I sensori si scambiano dei beacon con cui oltre al proprio mac address indicano anche la loro posizione stimata. Un nodo che deve inoltrare un messaggio riceve i beacon dai nodi vicini e in base alla sua posizione stima qual è il nodo che si trova più in direzione Nord di lui. Ovviamente i sensori non sono esattamente allineati. Questo non costa nulla sulla rete che si sta considerando perchè i beacon vengono già mandati nel rumor routing standard.
 
 #### Con la lista dei vicini
 
@@ -838,15 +795,15 @@ I nodi cercano di instradare query ed agenti in linea retta senza usare la posiz
 
 #### Modalità promisqua
 
-In modalità promisqua un sensore viene sempre risvegliato quando riceve un messaggio. Si può sfruttare questa modalità per aumentare la probabilità di intrecciare una query. Un nodo sceglie un vicino come next hop specificando il suo mac address. Il nodo successivo scopre di essere il destinatario confrontando il mac address del messaggio con il suo e reinoltra l'agente. Gli altri nodi intorno invece non sono destinatari ma ricevono comunque l'agente, ricordano nella loro cache che hanno visto l'agente e non reinoltrano l'agente. Normalmente la query deve incrociarsi esattamente su un nodo che ha portato l'agente. Con la modalità promisqua invece la query può arrivare ad un nodo che non ha ricevuto l'agente, ma che ha in cache il mac address di un nodo che è davvero sul path, e quindi gli reinoltra la query. Questo approccio è ottimo ma i nodi consumano più energia perchè si svegliano ogni volta che ricevono un messaggio anche se non è indirizzato a loro. 
+In modalità promisqua un sensore viene sempre risvegliato quando riceve un messaggio. Si può sfruttare questa modalità per aumentare la probabilità di intrecciare una query. Un nodo sceglie un vicino come next hop specificando il suo mac address. Il nodo successivo scopre di essere il destinatario confrontando il mac address del messaggio con il suo e reinoltra l'agente. Gli altri nodi intorno invece non sono destinatari ma ricevono comunque l'agente, ricordano nella loro cache che hanno visto l'agente ma non lo reinoltrano. Normalmente la query deve incrociarsi esattamente su un nodo che ha portato l'agente. Con la modalità promisqua invece la query può arrivare ad un nodo che non ha ricevuto l'agente, ma che ha in cache il mac address di un nodo che è davvero sul path, e quindi gli reinoltra la query. Questo approccio è ottimo ma i nodi consumano più energia perchè si svegliano ogni volta che ricevono un messaggio anche se non è indirizzato a loro. 
 
 ### Rumor: prestazioni
 
-I costi sono inferiori a direct diffusion con flooding delle query. Il costo di un flooding è $O(n^2)$ con $n$ numero di nodi. Nel caso di rumor routing il costo dipende dal numero di eventi e di query. Agenti e query devono avere un TTL grande (1000/2000 hop) per permettere di diffondere lontano l'evento e facilitare l'incrocio agente - query. 
+I costi sono inferiori a direct diffusion con flooding delle query. Il costo di un flooding è $O(n^2)$ con *n* numero di nodi. Nel caso di rumor routing il costo dipende dal numero di eventi e di query. Agenti e query devono avere un TTL grande (1000/2000 hop) per permettere di diffondere lontano l'evento e facilitare l'incrocio agente - query. 
 
 <img src="image-20200404125807361.png" alt="image-20200404125807361" style="zoom:200%;" />
 
-Le righe non grassetto riportano tre etichette:
+Le righe non in grassetto riportano tre etichette:
 
 - La &rarr; lifetime agente come numero di hop
 - Lq &rarr; lifetime query come numero di hop
@@ -862,12 +819,12 @@ La ridondanza di sensori, cammini e notifiche permette di avere una buona affida
 
 - **problema nell'indirizzamento multicast** &rarr; tutte le destinazioni riportano alla sorgente se hanno ricevuto una porzione dei dati tramite ack. La sorgente deve quindi conoscere l'insieme delle destinazioni a cui sta parlando, ciò è impossibile con i protocolli visti in precedenza.
 - **ACK è un problema** &rarr; i canali sono broadcast e proni a interferenze, gli acknowledgment potrebbero distruggersi in prossimita della sorgente. TCP funziona con l'idea di worst case, se arriva qualcosa di incomprensibile o non arriva niente ritrasmette il messaggio. La ritrasmissione consuma inutilmente batteria
-- **Soglia di ritrasmissione** &rarr; Se uno o più nodi destinatari non ricevono le informazioni che la sorgente sta cercando di trasmettere in modo affidabile vanno ritrasmesse. Si può usare una soglia per cui se x nodi su n non ricevono le informazioni, la sorgente reinoltra in unicast agli n - x nodi. Se invece sono tanti i nodi che non hanno ricevuto i dati allora invia di nuovo il messaggio in broadcast a tutti. Il problema è individuare la soglia x e decidere quanto tempo aspettare gli ack. Con un retrasmission timeout basso il sink potrebbe non aspettare gli ack che stanno arrivando lentamente, con un timeout alto fa perdere molto tempo. È difficile stimare un retrasmission timeout su un insieme di destinazioni a distanza diversa e con un duty cycle diverso
+- **Soglia di ritrasmissione** &rarr; Se uno o più nodi destinatari non ricevono le informazioni che la sorgente sta cercando di trasmettere in modo affidabile vanno ritrasmesse. Si può usare una soglia per cui se x nodi su n non ricevono le informazioni, la sorgente reinoltra in unicast agli n - x nodi. Se invece sono tanti i nodi che non hanno ricevuto i dati allora la sorgente invia di nuovo il messaggio in broadcast a tutti. Il problema è individuare la soglia x e decidere quanto tempo aspettare gli ack. Con un retrasmission timeout basso il sink potrebbe non aspettare gli ack che stanno arrivando lentamente, con un timeout alto fa perdere molto tempo. È difficile stimare un retrasmission timeout su un insieme di destinazioni a distanza diversa e con un duty cycle diverso
 - **TCP assume che la rete funzioni** &rarr; di solito in una rete normale un dato non arriva a destinazione perchè c'è congestione. Nelle WSN non dipende dalla congestione ma da un tasso di errore alto su canale, da collisioni tra le trasmissioni e da interferenze esterne. Nel frequency hopping il range di frequenze di trasmissione è diviso in sottorange. Sorgente e destinazione si accordano su come usare le frequenze saltando da una frequenza all'altra in modo random. Se c'è un interferenza su un sottorange di frequenza si ritrasmette subito su un'altra sottofrequenza. In generale è meglio essere più aggressivi che più lenti
 
 ## Influenza tasso di errore
 
-$p$ è il tasso di errore sul canale. Con un cammino di $n$ hop tra sorgente e destinazione la probabilità che non subisca errore è $(1-p)^n$ . Gli hop sono piccoli quindi i cammini sono lunghi. Invece che operare end to end si opera hop by hop. Si cerca di essere affidabili sul singolo hop. Si usano NACK al posto che ACK, tutti i nodi che ricevono non comunicano, i nodi che non hanno ricevuto fanno NACK. I NACK agiscono su un singolo hop, si recupera subito senza instradare il NACK fino alla sorgente.
+*p* è il tasso di errore sul canale. Con un cammino di *n* hop tra sorgente e destinazione la probabilità che non ci sia errore è $(1-p)^n$ . Gli hop sono piccoli quindi i cammini sono lunghi. Invece che operare end to end si opera hop by hop. Si cerca di essere affidabili sul singolo hop. Si usano NACK al posto che ACK, tutti i nodi che ricevono non comunicano, i nodi che non hanno ricevuto fanno NACK. I NACK agiscono su un singolo hop, si recupera subito senza instradare il NACK fino alla sorgente.
 
 ## Pump slowly, fetch quickly (PSFQ)
 
@@ -895,7 +852,7 @@ L'algoritmo è organizzato in 4 fasi:
 
 ### Fase di PUMP
 
-Lo usernode invia i dati in broadcast a tutti i suoi vicini (1 hop) con periodo $T_{min}$. Tutti i nodi che ricevono un messaggio lo memorizzano nella cache. I messaggi hanno un numero di sequenza per ricomporre i dati e accorgersi di mancanze nella sequenza. Il messaggio rimane in cache per il tempo necessario agli altri nodi di rilevare un fallimento. Quando un nodo riceve  un nuovo messaggio se lo ha già in cache lo scarta, altrimenti lo salva ed esegue un broadcast del messaggio dopo un tempo random tra $[T_{min}, T_{max}]$. Il messaggio può già essere in cache perché i dati sono mandati in flooding da ogni nodo intermedio. Quando i nodi reinoltrano il messaggio sono sempre più lenti dell'user node che invia con frequenza $T_{min}$. Nelle specifice PSFQ non ci sono indicazioni sui valori di $T_{min}$ e $T_{max}$. Un nodo è certo che il messaggio successivo arriverà come minimo dopo $T_{min}$, se il messaggio arrivato gli fa capire che c'è un gap, il nodo sa che può recuperare il messaggio mancante in almeno $T_{min}$ tempo.  $T_{min}$ evita quindi di diffondere i messaggi troppo velocemente cioè fa controllo di flusso. In TCP c'è la windows di ricezione. $T_{max}$ serve per evitare collisioni data l'alta densità di nodi. Se X manda un messaggio ai vicini Y, W Z, questi nodi potrebbero essere in raggio di comunicazione tra loro. Se Y, W e Z facessero broadcast istantaneamente dopo aver ricevuto il messaggio, queste trasmissioni si distruggerebbero tra loro. Con un tempo random tra $T_{min}$ e $T_{max}$ i nodi sono desincronizzati nell'invio. La differenza tra $T_{min}$ e $T_{max}$ è in relazione con il numero di nodi vicini che potrebbe aver un nodo. PSFQ è fatto in modo da poter stimare il tempo necessario per inviare i dati in tutta la rete.  La massima latenza è $D(n) = T_{max} \cdot n \cdot num_{hop}$ con $n$ il numero dei dati, $num_{hop}$ gli hop per la destinazione più lontana.
+Lo usernode invia i dati in broadcast a tutti i suoi vicini (1 hop) con periodo $T_{min}$. Tutti i nodi che ricevono un messaggio lo memorizzano nella cache. I messaggi hanno un numero di sequenza per ricomporre i dati e accorgersi di mancanze nella sequenza. Il messaggio rimane in cache per il tempo necessario agli altri nodi di rilevare un fallimento. Quando un nodo riceve  un nuovo messaggio se lo ha già in cache lo scarta, altrimenti lo salva ed esegue un broadcast del messaggio dopo un tempo random tra $[T_{min}, T_{max}]$. Il messaggio può già essere in cache perché i dati sono mandati in flooding da ogni nodo intermedio. Quando i nodi reinoltrano il messaggio sono sempre più lenti dell'user node che invia con frequenza $T_{min}$. Nelle specifice PSFQ non ci sono indicazioni sui valori di $T_{min}$ e $T_{max}$. Un nodo è certo che il messaggio successivo arriverà come minimo dopo $T_{min}$, se il messaggio arrivato gli fa capire che c'è un gap, il nodo sa che può recuperare il messaggio mancante in almeno $T_{min}$ tempo.  $T_{min}$ evita quindi di diffondere i messaggi troppo velocemente cioè fa controllo di flusso. In TCP c'è la windows di ricezione. $T_{max}$ serve per evitare collisioni data l'alta densità di nodi. Se X manda un messaggio ai vicini Y, W Z, questi nodi potrebbero essere in raggio di comunicazione tra loro. Se Y, W e Z facessero broadcast istantaneamente dopo aver ricevuto il messaggio, queste trasmissioni si distruggerebbero tra loro. Con un tempo random tra $T_{min}$ e $T_{max}$ i nodi sono desincronizzati nell'invio. La differenza tra $T_{min}$ e $T_{max}$ è in relazione con il numero di nodi vicini che potrebbe aver un nodo. PSFQ è fatto in modo da poter stimare il tempo necessario per inviare i dati in tutta la rete.  La massima latenza è $D(n) = T_{max} \cdot n \cdot num_{hop}$ con $n$ il numero dei dati, nella sequenza, $num_{hop}$ gli hop per la destinazione più lontana.
 
 ### PSFQ: Invio dei NACK
 
@@ -942,9 +899,9 @@ Si può mettere nel payload di un NACK tutti i messaggi mancanti. Il NACK non vi
 
 Se un nodo sente un altro NACK con gli stessi gap, allora sopprime il suo NACK e aspetta direttamente la ricezione dei pacchetti corretti. Se non riceve una risposta re-invia un NACK ogni $T_r$ t.c $\Delta$ << $T_r$ < $T_{max}$ fino a threshold. 
 
-Se un nodo chiede i messaggi può succedere che non ci sia nessun vicino che possiede tutti i messaggi richiesti, il nodo deve ricevere risposta tra $[1/4 \cdot T_r, 1/2 \cdot T_r]$ cioè si invia la risposta prima che il nodo ritrasmetta un altro nack. 
+Se un nodo chiede i messaggi può succedere che non ci sia nessun vicino che possiede tutti i messaggi richiesti, il nodo deve ricevere risposta tra $[1/4 \cdot T_r, 1/2 \cdot T_r]$ cioè si invia la risposta prima che il nodo ritrasmetta un altro NACK. 
 
-I nodi che rispondono ai nack non devono inviare tutti i messaggi richiesti, ma basta anche un solo messaggio. Sarà il nodo richiedente a mettere insieme i vari messaggi ricevuti da nodi diversi. Se un nodo che non riesce a recuperare tutti i messaggi non fa nulla fino a quando non inizia un nuovo update di una configurazione.
+I nodi che rispondono ai NACK non devono inviare tutti i messaggi richiesti, ma basta anche un solo messaggio. Sarà il nodo richiedente a mettere insieme i vari messaggi ricevuti da nodi diversi. Se un nodo che non riesce a recuperare tutti i messaggi non fa nulla fino a quando non inizia un nuovo update di una configurazione.
 
 #### NACK: varianti
 
@@ -952,12 +909,12 @@ I nodi che rispondono ai nack non devono inviare tutti i messaggi richiesti, ma 
 
 - **vicino preferito** &rarr; il nodo genera NACK solo se riceve un messaggio nuovo dal suo vicino preferito. Nel NACK indico il genitore preferito. Per massimizzare la probabilità di successo e minimizzare le probabilità di collisione, gli altri nodi aumentano il loro tempo di risposta.
 
-### PSFQ magic number
+### Numero magico PSFQ
 
 4 è un numero magico, usato in due modi:
 
 1. Nella fase di PUMP i nodi mettono i cache i messaggi e pescano il ritardo casuale tra $T_{min}$ e $T_{max}$. Se ricevono un messaggio uguale per la quarta volta, buttano via il messaggio e cancellano anche la ritrasmissione. Questo perché ci sono già altri 4 nodi che stanno reinoltrando il messaggio e dopo 4 la probabilità di successo non aumenta di molto.
-2. Nella fase di FETCH si limita il numero di tentativi di un nodo di recuperare un messaggio.
+2. Nella fase di FETCH si limitano il numero di tentativi di un nodo di recuperare un messaggio.
 
 ### Formato messaggi
 
@@ -1019,7 +976,7 @@ $$
 
   $\alpha \cdot n \cdot Tmax$
 
-  - $n$ è il massimo numero di messaggi che un nodo può immagazzinare nella cache. Se un nodo può immagazzinare al più $n$ messaggi in cache, allora il messaggio più vecchio nella cache viene eliminato dopo al massimo $n \cdot T_{max}$. Se un nodo deve richiedere un messaggio deve farlo prima che venga eliminato dalla cache degli altri nodi.
+  - *n* è il massimo numero di messaggi che un nodo può immagazzinare nella cache. Se un nodo può immagazzinare al più *n* messaggi in cache, allora il messaggio più vecchio nella cache viene eliminato dopo al massimo $n \cdot T_{max}$. Se un nodo deve richiedere un messaggio deve farlo prima che venga eliminato dalla cache degli altri nodi.
   
   $\alpha$ è un parametro $\ge 1$, tanto più alto quanto peggiore è il canale. Se il canale non è problematico $\alpha$ si mette 1.
 
@@ -1133,7 +1090,7 @@ Questo metodo non è adatto indoor perché il segnale non può propagarsi in mod
 
 ### Metodo del centroide
 
-Il sensore conosce il raggio di trasmissione e il periodo di invio dei beacon degli anchor points. Il sensore ascolta per un tempo t e conta il numero di beacon che riceve. S è il numero di campioni da raccogliere, se un anchor manda un beacon ogni T, per prendere S campioni il sensore aspetta $t = (S+1+\epsilon)$. C'è un +1 perché il sensore potrebbe mettersi ad ascoltare subito dopo che un anchor ha mandato un beacon. $\epsilon$ è perchè gli orologi del sensore non sono precisi.
+Il sensore conosce il raggio di trasmissione e il periodo di invio dei beacon degli anchor points. Il sensore ascolta per un tempo t e conta il numero di beacon che riceve. S è il numero di campioni da raccogliere, se un anchor manda un beacon ogni T, per prendere S campioni il sensore aspetta $t = (S+1+\epsilon)T$. C'è un +1 perché il sensore potrebbe mettersi ad ascoltare subito dopo che un anchor ha mandato un beacon. $\epsilon$ è perchè gli orologi del sensore non sono precisi.
 
 Si può calcolare la metrica di connettività $CM_i$,  per l'anchor i:
 $$
@@ -1213,7 +1170,7 @@ Ci vogliono diversi secondi per fare il setup della comunicazione in WIFI, un te
 
 Non è tanto la mobilità dei nodi che rende difficile la comunicazione, perchè se i nodi si muovono a velocità omogenea cambia la loro posizione assoluta ma non la posizione relativa. Diverso è il caso delle automobili, in cui i link tra i nodi cambiano continuamente e le velocità dei nodi non sono trascurabili, due automobili in direzione opposta hanno una velocità totale pari alla somma delle loro velocità. Quindi è necessario avere una comunicazione molto rapida tra i nodi.
 
-Come gli altri 802.11 è uno standard per WLAN (wireless local area network). Lo spettro scelto per la comunicazione è quello intorno ai 5.9 GHz, è "free but licensed". Si possono produrre liberamente apparati che emettono frequenze nei 5.9 GHz ma non sono utilizzabili fino a quando non si ottiene una licenza (gratuita) dallo stato che garantisce la conformità degli apparati con 802.11p WAVE. In questo modo il costo delle auto non aumenta e contemporaneamente si evitano interferenze con altri dispositivi non certificati.
+Come gli altri 802.11, WAVE è uno standard per WLAN (wireless local area network). Lo spettro scelto per la comunicazione è quello intorno ai 5.9 GHz, è "free but licensed". Si possono produrre liberamente apparati che emettono frequenze nei 5.9 GHz ma non sono utilizzabili fino a quando non si ottiene una licenza (gratuita) dallo stato che garantisce la conformità degli apparati con 802.11p WAVE. In questo modo il costo delle auto non aumenta e contemporaneamente si evitano interferenze con altri dispositivi non certificati.
 
 WAVE utilizza 7 canali diversi:
 
@@ -1223,11 +1180,13 @@ WAVE utilizza 7 canali diversi:
 - canale rosso &rarr; per la comunicazione su lunga distanza (anche su più hop) come notifiche di allerta in prossimità di intersezioni, incidenti ecc...
 - 4 canali rosa &rarr; canali di servizio per applicazioni utente come parcheggi, attrazioni turistiche ecc...
 
+![image-20200609170811366](image-20200609170811366.png)
+
 WAVE ha una banda di 2 Mbps e un raggio radio di 300m.
 
 Tutti i veicoli hanno almeno 2 radio, una è sempre connessa alla wildcard BSSID (canali di safety), e un'altra radio che trasmette sugli altri canali (canali di servizio). Con un solo beacon e senza negoziazione manda un segnale a tutti i dispositivi in range radio per poter accedere ad una BSSID non safety.  Non c'è il concetto di iniziatore come in 802.11, e chi ha creato una BSSID (usando un valore random invece che il MAC address) può lasciare il gruppo senza distruggerlo.
 
-<img src="image-20200505122656112.png" alt="image-20200505122656112" style="zoom:80%;" />
+<img src="image-20200505122656112.png" alt="image-20200505122656112" style="zoom: 150%;" />
 
 > Il MAC layer è il data link layer
 
@@ -1414,7 +1373,7 @@ Se c'è una query da S per D, con S e D nel medesimo 1-square, allora la query a
 
 #### Distribuzione location server
 
-Per ogni k-square in cui il nodo *n* si trova, *n* piazza un location server in ogni (k-1)-square in cui *n* non è. Se *n* si trova in un quadrato di ordine 2 piazza i location server negli altri 3 quadrati di ordine 1. L'operazione viene ripetuta per i quadrati di ordine superiore. Il location server del nodo *n* in un k-square è il nodo con ID più vicino a *n* tra tutti quelli nel quadrato con ID > ID(*n*). Quando si raggiunge il massimo identificatore si riparte da 0 e si prende il più piccolo. Per esempio se ho *n* = 17, *n1* = 2, *n2* = 7, si deve prendere il più piccolo maggiore di 17, essendo *n1* e *n2* minori di 17 viene scelto 2. Per tutta la durata dell'algoritmo i nodi non conoscono gli altri nodi al di fuori del loro 1-square, e nemmeno quali sono i loro location server. Quando *n* manda un location update lo inoltra geograficamente nel k-quadrato in cui deve risiedere il location server di interesse. Il primo nodo che riceve il location update non sa se è idoneo, quindi incapsula l'update in una finta query e viene instrada come se stesse cercando il location service di *n* all'interno del k-quadrato in cui deve essere aggiornato il location server. Il nodo usa un criterio C per inoltrare una query da una sorgente S a una destinazione D. Quando il messaggio arriva al location service, esso aggiorna la posizione. Chi cerca la posizione con lo stesso criterio C, la  troverà esattamente su quel nodo che fa da location service.
+Per ogni k-square in cui il nodo *n* si trova, *n* piazza un location server in ogni (k-1)-square in cui *n* non è. Se *n* si trova in un quadrato di ordine 2 piazza i location server negli altri 3 quadrati di ordine 1. L'operazione viene ripetuta per i quadrati di ordine superiore. Il location server del nodo *n* in un k-square è il nodo con ID più vicino a *n* tra tutti quelli nel quadrato con ID > ID(*n*). Quando si raggiunge il massimo identificatore si riparte da 0 e si prende il più piccolo. Per esempio se ho *n* = 17, *n1* = 2, *n2* = 7, si deve prendere il più piccolo maggiore di 17, essendo *n1* e *n2* minori di 17 viene scelto 2. Per tutta la durata dell'algoritmo i nodi non conoscono gli altri nodi al di fuori del loro 1-square, e nemmeno quali sono i loro location server. Quando *n* manda un location update lo inoltra geograficamente nel k-quadrato in cui deve risiedere il location server di interesse. Il primo nodo che riceve il location update non sa se è idoneo, quindi incapsula l'update in una finta query che viene instradata come se stesse cercando il location service di *n* all'interno del k-quadrato in cui deve essere aggiornato il location server. Il nodo usa un criterio C per inoltrare una query da una sorgente S a una destinazione D. Quando il messaggio arriva al location service, esso aggiorna la posizione. Chi cerca la posizione con lo stesso criterio C, la  troverà esattamente su quel nodo che fa da location service.
 
 ![image-20200516150017283](image-20200516150017283.png)
 
@@ -1496,7 +1455,7 @@ R2 è location server nel 3-square che contiene il 2-square, per tutti i nodi *m
 #### Struttura dati e messaggi
 
 **Location table:** ID dei nodi di cui *n* è location server e loro posizioni geografiche
-**Location cache:** ID e posizione dei nodi di cui *n* ha inoltrato gli update. Quando il nodo *n* dovrà inoltrare una query ad un nodo in cache, lo invia geograficamente nella posizione salvata in cache.
+**Location cache:** ID e posizione dei nodi di cui *n* ha inoltrato gli update. Quando il nodo *n* dovrà inoltrare una query ad ha un nodo in cache, lo invia geograficamente nella posizione salvata in cache.
 
 | LOCATION UPDATE                 |
 | :------------------------------ |
@@ -1937,6 +1896,138 @@ Tradeoff tra i due casi precedenti, minore latenza del primo caso e maggiore ris
 - scheduling computation
 - queue management
 - performance monitoring
+
+# Slide 12
+
+## LoWPAN
+
+### Caratteristiche
+
+reti con 10^3 - 10^5 dispositivi con scarse risorse di energia, memoria, computazione e possono essere mobile. Il canale utilizza frame di piccole dimensioni, il bit rate è basso ed essendo wirelesss il tasso di errore è alto. Per risparmiare energia il raggio radio è di poche decine di metri. Il payload di livello 2 802.15.4 è di 81-102 byte, ricordando che IPv6 usa 16 byte per l'indirizzo sorgente e 16 byte per l'indirizzo di destinazione. La topologia è multi-hop mesh.
+
+### benefici IPv6 over LOWPAN
+
+IPv6 ha una copertura quasi pari a IPv4, tutti i protocolli sono già standardizzati quindi non serve inventarsi un nuovo livello 3. Gli IP disponibili bastano a identificare univocamente ogni dispositivo della rete. Il problema è garantire compatibilità tra le reti LLN e IPv6.
+
+### Ripasso IPv6
+
+Un pacchetto IPv6 è formato da un main header di 40B + extension header, la sua massima dimensione è 1280B, troppo per le LLN.
+
+### 6LoWPAN caratteristiche
+
+é un middleware per adattare IPv6 sopra 802.15.4.
+
+Funzionalità:
+
+- header compression
+- gestire frammentazione &rarr; i pacchetti IPv6 vanno frammentati in più pacchetti
+- protocollo di routing sopra mesh &rarr; routing differente da quello classico per adattarsi a LLN
+
+### struttura sistema
+
+![image-20200606152505794](image-20200606152505794.png)
+
+mesh addressing:
+Dall'esterno la rete può essere vista come una VLAN (quindi rete broadcast), oppure come una LLN. È più sensato far vedere direttamente la LLN così è possibile andare ad indirizzare direttamente un singolo oggetto.
+
+### mesh addressing header
+
+- 10
+
+- S e D &rarr; una rete LLN può essere connessa alla rete Internet oppure ad un'altra LLN. Se indirizzo in un'unica LLN si può usare l'host ID. Se indirizzo tra due LLN è necessario l'indirizzo esteso perchè serve anche il network ID. I bit S D dicono se gli indirizzi sono contratti o estesi
+- Hop limit &rarr; numero massimo di radio hop (massimo 15 hop)
+- source address / destination address &rarr; la lunghezza dipende dai flag S e D
+
+### Fragment header
+
+- 110
+- rsv
+- datagram size &rarr; taglia totale dei dati non frammentati IPv6
+- datagram tag &rarr; comune a tutti i frammenti di uno stesso dato
+- datagram offset &rarr; spiazzamento all'interno dei dati originari
+
+![image-20200606190714051](image-20200606190714051.png)
+
+### header compression: schema HC1
+
+[riguardare perchè non ho capito niente minuto 30 ultima lezione]
+
+![image-20200606190719957](image-20200606190719957.png)
+
+### header UDP / IPv6
+
+- flag per la porta sorgente che indica se è una porta well-know e quindi che bastano 4 bit per la porta
+- flag per la porta destinazione che indica se è una porta well-know e quindi che bastano 4 bit per la porta
+- len
+- porta
+
+![image-20200606190728659](image-20200606190728659.png)
+
+### Routing intra-LoWPAN
+
+**Mesh under:**
+La rete LoWPAN è vista all'esterno come una LAN, all'interno si fa un broadcast tenendo conto che non tutti i nodi sono in raggio radio. È una modalità poca adatta perchè i nodi hanno poche risorse
+
+**Route over:**
+A livello 3 la rete è vista come una rete magliata e quindi servono più hop per arrivare a destinazione. I nodi hanno un indirizzo univoco.
+
+## RPL
+
+- Opera sopra link eterogenei e molto instabili (ostacoli, interferenze, mobilità, duty cycle...)
+- deve consumare meno risorse possibili:
+  - mantiene poche informazioni di stato
+  - assenza di loop
+  - RPL se ci sono problemi sui collegamenti non cerca immediatamente di ripristinare il link ma aspetta di vedere se si stabilizzano
+  - overhead proporzionale alla instabilità della rete
+
+RPL utilizza un approccio distance vector, costruisce un destination oriented directed acyclic graph.
+*Acyclic graph*: un albero
+*Destination oriented*: la destinazione è la radice dell'albero che è un border router
+*Directed*: si conosce se il messaggio viaggia verso l'alto o verso il basso
+Possono esserci tanti grafi ed un nodo può appartenere a più grafi, ogni istanza di RPL è indipendente dalle altre.
+
+### costruzione DODAG
+
+![image-20200606192020909](image-20200606192020909.png)LBR manda un messaggio DIO a tutti i sui vicini, i nodi vicini controllano se soddisfano i vincoli e scelgono se accettare di far parte del DODAG. Se hanno risorse sufficiente fanno da nodi intermedie, altrimenti scelgono di essere foglie. I nodi intermedi reinoltrano a tutti vicini il messaggio DIO, ricordando il livello dell'albero a cui si trovano. I nodi possono ricevere il messaggio da più genitori ma ne sceglieranno solo uno.
+
+### uso del DODAG
+
+I nodi ricordano la direzione verso la root
+
+**direzione UP: i nodi instradano verso la root**
+La costruzione del DODAG non parte sempre dal router, infatti un nodo che ha bisogno di inviare i dati può chiedere la costruzione del DODAG.
+
+**direzione DOWN: per comunicazione tra nodi, o da core network a nodi:**
+boh non lo so
+
+### Gestione messaggi DAO
+
+**Storing mode:** 
+ogni nodo ha una routing table con informazioni sui suoi figli, si possono usare dei prefissi che rappresentano un sottoalbero.
+
+**Non-storing mode: **
+i messaggi DAO vengono rimandati alla radice che è l'unica a ricordare la topologia completa dell'albero. Utilizza source routing facendo passare il pacchetto per tutti i nodi che formano il percorso fino alla destinazione.
+
+### Prevenzione loop
+
+I messaggi hanno un flag che indicano la direzione up/down, se un nodo riceve un pacchetto che viaggia in direzione down da un proprio figlio capisce che c'è un errore nella costruzione dell'albero e quindi si deve riconfigurare. C'è anche il flag del livello dell'albero che aiuta a capire se il pacchetto sta viaggiando nella direzione giusta. Un nodo può stare su più DODAG ma questi non sono mai mischiati, un dato che viaggia su un grafo non si sposterà mai su un altro DODAG. 
+
+### Gestione link instabili
+
+**Local repair:**
+Se un nodo ha perso un genitore, cerca un vicino che possa sostituirlo. Il vicino candidato si deve trovare nello stesso DODAG e deve trovarsi ad un livello inferiore.
+
+**Global repair:**
+è scatenata solo dal 6LBR, prevede la ricostruzione totale dell'albero. Se la rete è particolarmente instabile si potrebbe fare ogni notte.
+
+**Trickle timer:**
+determina la frequenza dell'invio dei messaggi DIO. Permette di rilevare inconsistenze nell'albero facendo un refresh periodico delle informazioni.
+
+### Considerazioni finali
+
+- RPL assume che esista un meccanismo di neighbor discovery e che abbiano un indirizzo di livello 2 e 3
+- approccio indipendente da tecnologie di livello 2
+- i cammini sono buoni, i nodi vicini alla root hanno routing table di dimensioni maggiori
 
 
 
